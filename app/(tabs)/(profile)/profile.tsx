@@ -1,6 +1,7 @@
 import { router, Stack } from "expo-router";
 import React from "react";
 import { StyleSheet, SafeAreaView, Text, Pressable, View, Image } from "react-native";
+import auth from '@react-native-firebase/auth';
 
 
 export default function ScreenProfile() {
@@ -9,6 +10,12 @@ export default function ScreenProfile() {
     }
     function setProfile() {
         router.navigate('/setProfile');
+    }
+
+    const singOut = () => {
+        auth()
+        .signOut()
+        .then(() => router.replace('/'));
     }
 
     return (
@@ -80,7 +87,7 @@ export default function ScreenProfile() {
                     <Text style={styles.buttonText}>Editar Perfil</Text>
                 </Pressable>
 
-                <Pressable style={styles.buttonDark}>
+                <Pressable style={styles.buttonDark} onPress={singOut}>
                     <Text style={styles.buttonTextDark}>Deslogar</Text>
                 </Pressable>
             </View>

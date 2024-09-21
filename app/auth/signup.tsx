@@ -1,10 +1,18 @@
 import React from 'react';
-import { Image, StyleSheet, View, Text, TextInput, SafeAreaView, StatusBar, ViewBase, Pressable } from 'react-native';
-import { ButtonRoute } from '@/components/button-route';
-import { router } from 'expo-router';
+import { StyleSheet, View, Text, TextInput, SafeAreaView, StatusBar, Pressable } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { ButtonPadrao } from '@/components/button';
+import database from '@react-native-firebase/database'
+
+type Props = {
+    email?: string,
+}
+
 
 export default function ScreenSignup() {
-    const [Email, setEmail] = React.useState('')
+    const { email } = useLocalSearchParams<Props>();
+
+    const [Email, setEmail] = React.useState<string>(email || '')
     const [User, setUser] = React.useState('')
     const [Pass, setPass] = React.useState('')
 
@@ -12,6 +20,16 @@ export default function ScreenSignup() {
         router.navigate('/auth/login')
     }
 
+    function addUser() {
+        // database().ref('/user/').
+        // set({
+        //     name: User,
+        //     email: Email,
+        //     Pass: Pass,
+        // }).then(()=>console.log('dado salvo'))
+    }
+    
+    
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.title}>Crie sua conta!</Text>
@@ -46,7 +64,7 @@ export default function ScreenSignup() {
 
 
 
-                <ButtonRoute title='Cadastrar' width={120} route={'/products'} methodRout='replace' />
+                <ButtonPadrao title='Cadastrar' width={120} onPress={addUser} height={50} marginTop={25}/>
 
                 <Pressable style={styles.login} onPress={handleLogin}>
                     <Text style={styles.textLogin}>Já possui cadastro? <Text>Clique aqui.</Text></Text>

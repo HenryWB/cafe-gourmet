@@ -1,17 +1,52 @@
 import { ButtonRoute } from '@/components/button-route';
 import { router } from 'expo-router';
-import React from 'react';
-import { StyleSheet, SafeAreaView, StatusBar, Image, ImageBackground } from 'react-native';
+import React, { useEffect } from 'react';
+import { StyleSheet, SafeAreaView, StatusBar, Image, ImageBackground, Text } from 'react-native';
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { ButtonPadrao } from '@/components/button';
 
 
 
 export default function Screen() {
-  return (
+  const [user, setUser] = React.useState<FirebaseAuthTypes.User | null>(null)
+  const [initializing, setInitializing] = React.useState(true)
 
+  const onAuthStateChanged = (user: FirebaseAuthTypes.User | null ) => {
+    setUser(user)
+    if(initializing) setInitializing(false);
+  }
+
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+    return subscriber;
+  }, [])
+
+  if (initializing) return null;
+
+
+  const handleLogin = () => {
+    if(auth().currentUser == null){
+      router.navigate('/auth/login')
+    }
+    
+    else{
+      router.navigate('/products')
+    }
+  }
+  
+  return (
     <SafeAreaView style={styles.container} >
+      
+
       <ImageBackground source={require('@/assets/images/bg-inicial.png')} style={styles.content}>
+        {!user &&
+          <Text style={styles.h1}>Deslogado</Text>
+        }
+        {user &&
+          <Text style={styles.h1}>Logado</Text>
+        }
         <Image source={require('@/assets/images/logo.png')} style={styles.logo} />
-        <ButtonRoute width={120} route={'/auth/login'} title='Acessar' methodRout='navigate'/>
+        <ButtonPadrao width={120} onPress={handleLogin} title='Acessar' marginTop={20} height={50}/>
       </ImageBackground>
     </SafeAreaView>
   );
@@ -35,4 +70,10 @@ const styles = StyleSheet.create({
     height: 100,
     resizeMode: 'contain',
   },
+
+  h1:{
+    textAlign: 'center',
+    fontSize: 24,
+    marginBottom:20
+  }
 });
