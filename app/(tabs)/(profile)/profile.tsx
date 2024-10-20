@@ -1,26 +1,71 @@
 import { router, Stack } from "expo-router";
-import React from "react";
-import { StyleSheet, SafeAreaView, Text, Pressable, View, Image } from "react-native";
+import React, { useEffect } from "react";
+import { StyleSheet, SafeAreaView, Text, Pressable, View, Image, Alert, TextInput, ScrollView } from "react-native";
+import {utils} from '@react-native-firebase/app';
 import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+import { FirebaseContext } from "@/contexts/FirebaseContext";
+import storage, {ref, getStorage} from '@react-native-firebase/storage';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
+
 
 
 export default function ScreenProfile() {
-    function paymant() {
-        router.navigate('/paymant');
+    const firebaseContext = React.useContext(FirebaseContext);
+    const [Pass, setNewPass] = React.useState<string>('')
+    const [changePass, setPass] = React.useState(false)
+    const [loading, setLoading] = React.useState(false)
+
+    function cards() {
+        router.navigate(`/cards`);
     }
+
+    function enderecos() {
+        router.navigate(`/enderecos`);
+    }
+
     function setProfile() {
-        router.navigate('/setProfile');
+        router.navigate(`/setProfile`);
     }
 
     const singOut = () => {
         auth()
-        .signOut()
-        .then(() => router.replace('/'));
+            .signOut()
+            .then(() => router.replace('/'));
     }
 
-    return (
-        <SafeAreaView style={styles.container}>
+    const handlePassChange = () => {
+        setPass(!changePass)
+    }
 
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 1,
+        });
+
+        if (result.assets != null) {
+            setLoading(true)    
+
+            const reference = storage().ref('profilePicture_'  + auth().currentUser?.uid);
+            await reference.putFile(result.assets[0].uri);
+            await reference.getDownloadURL().then((url) => {
+                auth().currentUser?.updateProfile(
+                    {
+                      photoURL: url
+                    }
+                ).then(() => {
+                    setLoading(false)
+                })
+            })           
+        }
+      };
+
+       return (
+        <SafeAreaView style={styles.container}>
             <Stack.Screen options={{
                 title: 'Perfil',
                 headerShown: true,
@@ -28,62 +73,116 @@ export default function ScreenProfile() {
                 headerTitleStyle: { color: 'white', fontFamily: 'OswaldMedium', fontSize: 28 },
                 headerTintColor: '#F2E8DF',
             }} />
-
+            <ScrollView>
             <View style={styles.header}>
                 <View style={styles.linha}></View>
-                <Image style={styles.image} source={{ uri: 'https://i.pinimg.com/564x/07/87/fd/0787fd03b81df366c9052a24fba17700.jpg' }} />
+
+                <Pressable onPress={pickImage}>
+                        <Image style={styles.image} source={loading ?{ uri: 'https://firebasestorage.googleapis.com/v0/b/cafe-258cc.appspot.com/o/images.png?alt=media&token=19ad755b-6f53-477d-a077-bf58a4844e2c'} : {uri: auth().currentUser?.photoURL?.toString()} } /> 
+                </Pressable>
+                
             </View>
-
-
             <View style={styles.content}>
-                <Text style={styles.h1}>Fulano</Text>
-                <Text style={styles.h2}>E-mail:</Text>
+                <Text style={styles.h1}>{firebaseContext.currentUser?.name}</Text>
+                <Text style={styles.h2}>E-mail: {auth().currentUser?.email}</Text>
 
                 <View style={styles.infosPersonal}>
                     <Text style={styles.h3}>Informações Pessoais:</Text>
                     <View style={styles.contentInfos}>
                         <Text style={styles.label}>Nome: </Text>
-                        <Text style={styles.text}>Fulano de Tal</Text>
+                        <Text style={styles.text}>{firebaseContext.currentUser?.name}</Text>
                     </View>
 
                     <View style={styles.contentInfos}>
                         <Text style={styles.label}>Celular: </Text>
-                        <Text style={styles.text}>(11) 993574815</Text>
+                        <Text style={styles.text}>{firebaseContext.currentUser?.tel}</Text>
                     </View>
 
                     <View style={styles.contentInfos}>
                         <Text style={styles.label}>Data de Nascimento: </Text>
-                        <Text style={styles.text}>27/05/1999</Text>
+                        <Text style={styles.text}>{firebaseContext.currentUser?.nascimento}</Text>
                     </View>
                 </View>
 
                 <View style={styles.infosPayment}>
                     <Text style={styles.h3}>Pagamento e Endereço:</Text>
-                    <Pressable style={styles.contentInfosPress}>
+                    <Pressable onPress={cards} style={styles.contentInfosPress}>
                         <Text style={styles.label}>Trocar cartão:</Text>
-                        <Text style={styles.text}>Cartão 1</Text>
+                        <Text style={styles.text}>{firebaseContext.currentCard}</Text>
                     </Pressable>
 
-                    <Pressable style={styles.contentInfosPress}>
+                    <Pressable onPress={enderecos} style={styles.contentInfosPress}>
                         <Text style={styles.label}>Trocar Endereço:</Text>
-                        <Text style={styles.text}>Endereço 1</Text>
+                        <Text style={styles.text}>{firebaseContext.currentEndereco}</Text>
                     </Pressable>
                 </View>
 
                 <View style={styles.infosSecurity}>
                     <Text style={styles.h3}>Segurança:</Text>
-                    <Pressable style={styles.contentInfosPress}>
-                        <Text style={styles.label}>Trocar senha</Text>
-                    </Pressable>
 
-                    <Pressable style={styles.contentInfosPress}>
+                    {!changePass &&
+                        <Pressable style={styles.contentInfosPress} onPress={handlePassChange}>
+                            <Text style={styles.label}>Trocar senha</Text>
+                        </Pressable>
+                    }
+
+                    {changePass &&
+                        <>
+                            <Text style={styles.labelInput}>Senha:</Text>
+                            <TextInput 
+                                secureTextEntry={true}
+                                placeholder='Digite sua senha...'
+                                value={Pass}
+                                onChangeText={t => setNewPass(t)}
+                                style={styles.inputStyle} 
+                                />
+                            <View style={styles.contentButtonPass}>
+                                <Pressable style={styles.contentInfosPress} onPress={ handlePassChange }>
+                                    <Text style={styles.label}>Cancelar</Text>
+                                </Pressable>
+                                
+                                <Pressable style={styles.contentInfosPress} onPress={() => {
+                                    if(Pass === '') return alert('Insira uma senha válida')
+                                    auth().currentUser?.updatePassword(Pass).then(()=>{
+                                        alert('Senha alterada com sucesso!')
+                                    })
+                                 }
+                                }>
+                                    <Text style={styles.label}>Ok</Text>
+                                </Pressable>                                
+                            </View>
+                        </>
+                    }
+
+
+                    <Pressable style={styles.contentInfosPress} onPress={() => {
+                        return Alert.alert('Deletar conta', 'Você tem certeza que deseja deletar sua conta?', [
+                            {
+                                text: 'Não',
+                                onPress: () => console.log('Cancel Pressed'),
+                                style: 'cancel',
+                            },
+                            {
+                                text: 'Sim', onPress: () => {
+                                    console.log(firebaseContext.currentUser?.id?.toString())
+                                    firestore().collection('Users').doc(firebaseContext.currentUser?.id?.toString()).delete().then(() => {
+                                        auth().currentUser?.delete().then(() => {
+                                            firebaseContext.setUser(null)
+                                            router.replace('/auth/login')
+                                        })
+                                    })
+
+                                }
+                            },
+                        ])
+
+                    }}>
                         <Text style={styles.label}>Deletar conta</Text>
                     </Pressable>
                 </View>
             </View>
-
             <View style={styles.contentButton}>
-                <Pressable style={styles.button}>
+                <Pressable style={styles.button} onPress={setProfile}>
                     <Text style={styles.buttonText}>Editar Perfil</Text>
                 </Pressable>
 
@@ -91,8 +190,9 @@ export default function ScreenProfile() {
                     <Text style={styles.buttonTextDark}>Deslogar</Text>
                 </Pressable>
             </View>
+            </ScrollView>
 
-            
+
 
 
         </SafeAreaView>
@@ -117,7 +217,7 @@ const styles = StyleSheet.create({
         height: 100,
         borderRadius: 10,
         resizeMode: 'cover',
-        marginTop: -70
+        marginTop: -60
     },
 
     linha: {
@@ -129,7 +229,6 @@ const styles = StyleSheet.create({
     content: {
         width: '95%',
         padding: 5,
-        marginTop: 5,
         marginHorizontal: 'auto',
     },
 
@@ -142,12 +241,19 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
     },
 
+    contentButtonPass: {
+        width: '100%',
+        marginHorizontal: 'auto',
+        justifyContent: 'flex-end',
+        gap: 15,
+        flexDirection: 'row',
+    },
+
     h1: {
         fontFamily: 'OswaldMedium',
         fontSize: 24,
         textAlign: 'center',
         color: '#592C28',
-
     },
 
     h2: {
@@ -155,6 +261,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: 'center',
         color: '#592C28',
+        marginBottom: 20,
     },
 
     h3: {
@@ -181,7 +288,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
     },
 
-    contentInfosPress:{
+    contentInfosPress: {
         flexDirection: 'row',
         justifyContent: 'space-between',
     },
@@ -214,7 +321,7 @@ const styles = StyleSheet.create({
         gap: 5,
     },
 
-    button:{
+    button: {
         borderWidth: 3,
         borderColor: '#592C28',
         width: 100,
@@ -224,13 +331,14 @@ const styles = StyleSheet.create({
         alignContent: 'center',
     },
 
-    buttonText:{
+    buttonText: {
+        color: '#592C28',
         fontFamily: 'OswaldRegular',
         fontSize: 16,
         textAlign: 'center',
     },
 
-    buttonDark:{
+    buttonDark: {
         backgroundColor: '#592C28',
         width: 100,
         height: 40,
@@ -239,11 +347,33 @@ const styles = StyleSheet.create({
         alignContent: 'center',
     },
 
-    buttonTextDark:{
+    buttonTextDark: {
         fontFamily: 'OswaldRegular',
         color: 'white',
         fontSize: 16,
         textAlign: 'center',
+    },
+
+
+
+    labelInput: {
+        color: '#592C28',
+        alignSelf: 'flex-start',
+        fontSize: 16,
+        fontFamily: 'OswaldRegular',
+    },
+
+    inputStyle: {
+        width: '100%',
+        padding: 5,
+        fontSize: 16,
+        backgroundColor: "transparent",
+        borderBottomColor: 'black',
+        borderBottomWidth: 2,
+        marginBottom: 10,
+        fontFamily: 'OswaldLight',
+        borderColor: '#592C28',
+        textTransform: 'lowercase',
     },
 
 });

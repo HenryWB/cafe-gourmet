@@ -1,15 +1,17 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Image, StyleSheet, View, Text, TextInput, SafeAreaView, StatusBar, ViewBase, Pressable } from 'react-native';
-import { ButtonRoute } from '@/components/button-route';
 import { router } from 'expo-router';
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import auth from '@react-native-firebase/auth';
 import { ButtonPadrao } from '@/components/button';
+import firestore from '@react-native-firebase/firestore';
+import { FirebaseContext } from '@/contexts/FirebaseContext';
+import { User } from '@/types/user';
+
 
 export default function ScreenLogin() {
-  const [user, setUser] = React.useState<FirebaseAuthTypes.User | null>(null)
-
   const [Email, setEmail] = React.useState<string>('')
   const [Pass, setPass] = React.useState<string>('')
+  const firebaseContext = React.useContext(FirebaseContext);
 
   const handleForgot = () =>{
     router.navigate('/auth/forgot')
@@ -17,6 +19,18 @@ export default function ScreenLogin() {
 
   const handleSignup = () =>{
     router.navigate('/auth/signup')
+  }
+
+  const queryUser = () => {
+    firestore().collection('Users').where('email', '==', Email).get().then(querySnapshot => {   
+      if (querySnapshot.empty) {
+        const params = new URLSearchParams();
+        params.set('email', Email.toString())
+        router.navigate(`/auth/signup?${params.toString()}`) 
+      } else {
+        alert('Email ou senha estão errados')
+      }
+    });
   }
 
   const handleLogin = () => {
@@ -28,19 +42,34 @@ export default function ScreenLogin() {
       .then(
         () => 
         {
+          firestore().collection('Users').where('email', '==', Email).get().then(querySnapshot => {
+            querySnapshot.forEach(documentSnapshot => {
+              const newUser: User  = {
+                id: documentSnapshot.id,
+                email: documentSnapshot.data()['email'],
+                name: documentSnapshot.data()['name'],
+                tel: documentSnapshot.data()['tel'],
+                nascimento: documentSnapshot.data()['nascimento'],
+                tipo: documentSnapshot.data()['tipo'],
+              }
+              //console.log(newUser)
+              firebaseContext.setUser(newUser)
+            })
+            
+          })
           return router.navigate('/products')
         })
       .catch((error) => 
         {
+          console.log(error.code)
           if (error.code === 'auth/invalid-email') {
             alert('Email está com formato indevido');
           }
-
           if (error.code === 'auth/invalid-credential') {
-            console.log('usuario não está cadastrado');
-            const params = new URLSearchParams();
-            params.set('email', Email.toString())
-            return router.navigate(`/auth/signup?${params.toString()}` )
+            queryUser();
+          }
+          if (error.code === 'auth/too-many-requests') {
+            alert('Você escedeu as tentatvas de login, tente novamente, mais tarde')
           }
         });
     }

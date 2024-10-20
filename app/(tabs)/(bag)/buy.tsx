@@ -1,18 +1,32 @@
-import { Cafe } from "@/.expo/types/cafe";
 import { ButtonPadrao } from "@/components/button";
-import CardCadastro from "@/components/card-cadastros";
+import CardCadastroEndereco from "@/components/card-cadastros-endereco";
+import CardCadastroCartao from "@/components/card-cadastros-cartao";
 import { CardPedido } from "@/components/card-pedido";
 import Radio from "@/components/inputs/Radio";
+import { FirebaseContext } from "@/contexts/FirebaseContext";
 import { getAllProducts } from "@/services/cafe";
-import { router, Stack } from "expo-router";
-import React from "react";
+import { router, Stack, useLocalSearchParams } from "expo-router";
+import React, { useContext, useEffect } from "react";
 import { StyleSheet, SafeAreaView, FlatList, View, Text, Pressable, TextInput, ScrollView } from "react-native";
 
+type Props = {
+    formaPagamento?: string
+}
+
 export default function ScreenBuy() {
-    const [contextCartao, setContextCartao] = React.useState('novo');
-    const [contextEndereco, setContextEndereco] = React.useState('novo');
-    const [cartao, setCartao] = React.useState('0');
-    const [endereco, setEndereco] = React.useState('0');
+    const [contextCartao, setContextCartao] = React.useState('');
+    const [contextEndereco, setContextEndereco] = React.useState('');
+    const [cartaoAtual, setCartao] = React.useState('');
+    const [endereco, setEndereco] = React.useState('');
+    
+    const { formaPagamento } =  useLocalSearchParams<Props>();
+
+    const { cartao, dispatchCartao, currentUser } = useContext(FirebaseContext)
+
+
+    useEffect(()=>{
+        console.log(cartao)
+    })
 
     const pressContextCartaoNovo = () => {
         setContextCartao('novo')
@@ -30,6 +44,15 @@ export default function ScreenBuy() {
         setContextEndereco('cadastrar')
     }
 
+    const selecionarCartao = (cartao: string)=>{
+        //console.log(cartao)
+        dispatchCartao({
+            type: 'SELECIONAR',
+            index: cartao,
+            user: currentUser,
+        })
+        return cartao
+    }
 
 
     function status() {
@@ -54,126 +77,89 @@ export default function ScreenBuy() {
                 <Text style={styles.text}>Informe seus dados para o pagamento.</Text>
 
                 <View  style={styles.configArea}>
-                    <View>
-                        <Text style={styles.h2}>Cartão</Text>
-                        <View style={styles.contextView}>
-                            <Pressable onPress={pressContextCartaoNovo}>
-                                <Text style={contextCartao === 'novo' ? styles.contextTextView : styles.contextTextViewInactive}>Novo</Text>
-                            </Pressable>
+                    {formaPagamento === 'cartao' &&
+                        <View>
+                            <Text style={styles.h2}>Cartão</Text>
+                            <View style={styles.contextView}>
+                                <Pressable onPress={pressContextCartaoNovo}>
+                                    <Text style={contextCartao === 'novo' ? styles.contextTextView : styles.contextTextViewInactive}>Novo</Text>
+                                </Pressable>
 
-                            <Text style={styles.contextTextViewInactive}>|</Text>
+                                <Text style={styles.contextTextViewInactive}>|</Text>
 
-                            <Pressable onPress={pressContextCartaoCadastrar}>
-                                <Text style={contextCartao === 'cadastrar' ? styles.contextTextView : styles.contextTextViewInactive}>Cadastro</Text>
-                            </Pressable>
-                        </View>
+                                <Pressable onPress={pressContextCartaoCadastrar}>
+                                    <Text style={contextCartao === 'cadastrar' ? styles.contextTextView : styles.contextTextViewInactive}>Cadastro</Text>
+                                </Pressable>
+                            </View>
 
-                        {contextCartao === 'novo' &&
-                            <ScrollView style={styles.scrollInput}  nestedScrollEnabled = {true}>
-                                <Text style={styles.label}>Nome do cartão:</Text>
-                                <TextInput 
-                                    placeholder="Digite o nome no seu cartão..." 
-                                    inputMode="text"
-                                    style={[styles.input, {textTransform: 'uppercase'}]}
-                                />
-                                
-                                <Text style={styles.label}>CPF:</Text>
-                                <TextInput 
-                                    placeholder="Digite o seu CPF..." 
-                                    inputMode="numeric"
-                                    style={styles.input}
-                                />
+                            {contextCartao === 'novo' &&
+                                <ScrollView style={styles.scrollInput} nestedScrollEnabled={true}>
+                                    <Text style={styles.label}>Nome do cartão:</Text>
+                                    <TextInput
+                                        placeholder="Digite o nome no seu cartão..."
+                                        inputMode="text"
+                                        style={[styles.input, { textTransform: 'uppercase' }]}
+                                    />
 
-                                <Text style={styles.label}>Número do cartão:</Text>
-                                <TextInput 
-                                    placeholder="Digite o número do seu cartão..." 
-                                    inputMode="numeric"
-                                    style={styles.input}
-                                />
+                                    <Text style={styles.label}>CPF:</Text>
+                                    <TextInput
+                                        placeholder="Digite o seu CPF..."
+                                        inputMode="numeric"
+                                        style={styles.input}
+                                    />
 
-                                 <View style={styles.inputArea}>
-                                    <View >
-                                        <Text style={styles.label}>Validade:</Text>
+                                    <Text style={styles.label}>Número do cartão:</Text>
+                                    <TextInput
+                                        placeholder="Digite o número do seu cartão..."
+                                        inputMode="numeric"
+                                        style={styles.input}
+                                    />
 
-                                        <View style={styles.inputArea}>
-                                            <TextInput 
-                                                placeholder="Mês..." 
-                                                inputMode="numeric"
-                                                style={styles.inputSmall}
-                                            />
-                                            <Text style={styles.label}> / </Text>
-                                            <TextInput 
-                                                placeholder="Ano..." 
+                                    <View style={styles.inputArea}>
+                                        <View >
+                                            <Text style={styles.label}>Validade:</Text>
+
+                                            <View style={styles.inputArea}>
+                                                <TextInput
+                                                    placeholder="Mês..."
+                                                    inputMode="numeric"
+                                                    style={styles.inputSmall}
+                                                />
+                                                <Text style={styles.label}> / </Text>
+                                                <TextInput
+                                                    placeholder="Ano..."
+                                                    inputMode="numeric"
+                                                    style={styles.inputSmall}
+                                                />
+                                            </View>
+
+
+                                        </View>
+
+                                        <View>
+                                            <Text style={styles.label}>CVV:</Text>
+                                            <TextInput
+                                                placeholder="CVV..."
                                                 inputMode="numeric"
                                                 style={styles.inputSmall}
                                             />
                                         </View>
-                                        
-                                        
                                     </View>
-                                    
-                                    <View>
-                                        <Text style={styles.label}>CVV:</Text>
-                                        <TextInput 
-                                            placeholder="CVV..." 
-                                            inputMode="numeric"
-                                            style={styles.inputSmall}
-                                        />
-                                    </View>
-                                </View>
-                            </ScrollView>
-                        }
-                       
-                       {contextCartao === 'cadastrar' &&
-                        <ScrollView style={styles.scrollInput} nestedScrollEnabled = {true}>
-                            <CardCadastro options={[
-                            {
-                                title: 'Cartão 1', 
-                                label_1: 'Nome', text_1: 'Henryque Wallace', 
-                                label_2: 'Número', text_2: '0000000000000000', 
-                                label_3: 'CPF', text_3: '00000000000', 
-                                label_4: 'CVV', text_4: '000', 
-                                label_5: 'Validade', text_5: '00/00', 
-                                id: '0'
-                            },
+                                </ScrollView>
+                            }
 
-                            {
-                                title: 'Cartão 2', 
-                                label_1: 'Nome', text_1: 'Wallace', 
-                                label_2: 'Número', text_2: '0000000000000000', 
-                                label_3: 'CPF', text_3: '00000000000', 
-                                label_4: 'CVV', text_4: '000', 
-                                label_5: 'Validade', text_5: '00/00', 
-                                id: '1'
-                            },
+                            {contextCartao === 'cadastrar' &&
+                                <ScrollView style={styles.scrollInput} nestedScrollEnabled={true}>
+                                    <CardCadastroCartao options={cartao.cartoes}
+                                        checkedValue={cartao.curentIndex}
+                                        onChange={setCartao}
+                                    />
+                                </ScrollView>
+                            }
 
-                            {
-                                title: 'Cartão 3', 
-                                label_1: 'Nome', text_1: 'Nayra', 
-                                label_2: 'Número', text_2: '0000000000000000', 
-                                label_3: 'CPF', text_3: '00000000000', 
-                                label_4: 'CVV', text_4: '000', 
-                                label_5: 'Validade', text_5: '00/00', 
-                                id: '2'
-                            },
+                        </View>
+                    }
 
-                            {
-                                title: 'Cartão 4', 
-                                label_1: 'Nome', text_1: 'Nayra', 
-                                label_2: 'Número', text_2: '0000000000000000', 
-                                label_3: 'CPF', text_3: '00000000000', 
-                                label_4: 'CVV', text_4: '000', 
-                                label_5: 'Validade', text_5: '00/00', 
-                                id: '3'
-                            },
-                            ]} 
-                            checkedValue={cartao}
-                            onChange={setCartao}
-                        />
-                        </ScrollView>
-                        }
-                        
-                    </View>
 
                     <View>
                         <Text style={styles.h2}>Endereço</Text>
@@ -246,37 +232,7 @@ export default function ScreenBuy() {
                        
                        {contextEndereco === 'cadastrar' &&
                         <ScrollView style={styles.scrollInput} nestedScrollEnabled = {true}>
-                            <CardCadastro options={[
-                            {
-                                title: 'Endereço 1', 
-                                label_1: 'Endereço', text_1: 'Rua 1', 
-                                label_2: 'Bairro', text_2: 'Limoeiro', 
-                                label_3: 'Complemento', text_3: '800', 
-                                label_4: 'CEP', text_4: '00000000', 
-                                label_5: 'Número', text_5: '0000', 
-                                id: '0'
-                            },
-
-                            {
-                                title: 'Endereço 2', 
-                                label_1: 'Endereço', text_1: 'Rua 2', 
-                                label_2: 'Bairro', text_2: 'Limoeiro', 
-                                label_3: 'Complemento', text_3: '800', 
-                                label_4: 'CEP', text_4: '00000000', 
-                                label_5: 'Número', text_5: '0000', 
-                                id: '1'
-                            },
-
-                            {
-                                title: 'Endereço 3', 
-                                label_1: 'Endereço', text_1: 'Rua 3', 
-                                label_2: 'Bairro', text_2: 'Limoeiro', 
-                                label_3: 'Complemento', text_3: '800', 
-                                label_4: 'CEP', text_4: '00000000', 
-                                label_5: 'Número', text_5: '0000', 
-                                id: '2'
-                            },
-                            ]} 
+                            <CardCadastroEndereco options={[]} 
                             checkedValue={endereco}
                             onChange={setEndereco}
                         />
@@ -293,10 +249,6 @@ export default function ScreenBuy() {
                         <ButtonPadrao height={50} onPress={status} title="Pagar" marginTop={5} width={125} />
                     </View>
         </SafeAreaView>
-
-
-
-
     );
 };
 

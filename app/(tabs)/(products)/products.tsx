@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { StyleSheet, View, SafeAreaView, FlatList, StatusBar, Pressable } from 'react-native';
 import { CardCafe } from '@/components/card-cafe';
-import { Cafe } from "@/.expo/types/cafe";
+import { Cafe } from "@/types/cafe";
 import { Stack, Tabs } from 'expo-router';
 import { FontAwesome, FontAwesome6 } from '@expo/vector-icons';
 import { getAllProducts } from '@/services/cafe';
+import { ProductsContext } from '@/contexts/productsContext';
 
 export default function ScreenProducts() {
-  const products =  getAllProducts();
+  const productsContext = useContext(ProductsContext)
 
   return (
     <SafeAreaView style={styles.container}>
@@ -30,14 +31,13 @@ export default function ScreenProducts() {
 
       <View style={styles.content}>
         <FlatList
-          data={products}
+          data={productsContext.products}
           renderItem={({item}: {item: Cafe}) => (
           <CardCafe cafe={item} />
           )}
           keyExtractor={item => item.id.toString()}
         />
       </View>
-
     </SafeAreaView>
   );
 }

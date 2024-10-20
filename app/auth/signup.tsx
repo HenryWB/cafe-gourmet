@@ -2,7 +2,11 @@ import React from 'react';
 import { StyleSheet, View, Text, TextInput, SafeAreaView, StatusBar, Pressable } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ButtonPadrao } from '@/components/button';
-import database from '@react-native-firebase/database'
+import  firebase  from '@react-native-firebase/app';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import { FirebaseContext } from '@/contexts/FirebaseContext';
+
 
 type Props = {
     email?: string,
@@ -10,6 +14,8 @@ type Props = {
 
 
 export default function ScreenSignup() {
+    const firebaseContext  = React.useContext(FirebaseContext);
+
     const { email } = useLocalSearchParams<Props>();
 
     const [Email, setEmail] = React.useState<string>(email || '')
@@ -20,13 +26,42 @@ export default function ScreenSignup() {
         router.navigate('/auth/login')
     }
 
-    function addUser() {
-        // database().ref('/user/').
-        // set({
-        //     name: User,
-        //     email: Email,
-        //     Pass: Pass,
-        // }).then(()=>console.log('dado salvo'))
+    const addUser = async () => {
+        if(Email === '' || Email === null) return alert('por favor insira um e-mail')
+        if(Pass === '' || Pass === null) return alert('por favor insira uma senha')
+        if(User === '' || Pass === null) return alert('por favor insira um usuário')
+
+        
+        auth()
+        .createUserWithEmailAndPassword(Email, Pass)
+        .then(() => {
+            firestore()
+            .collection('Users')
+            .add({
+                name: User,
+                email: Email,
+                tipo: 'cliente',
+            })
+            .then(infos => {
+                const newUser =  {
+                    id: infos.id,
+                    name: User,
+                    email: Email,
+                    tipo: 'cliente',
+                }
+                firebaseContext.setUser(newUser)
+                router.navigate('/products');
+            });
+        })
+        .catch(error => {
+            if (error.code === 'auth/email-already-in-use') {
+            alert('O email informado já está sendo utilizado');
+            }
+        
+            if (error.code === 'auth/invalid-email') {
+            alert('Esse endereço de email é invalido');
+            }
+        });
     }
     
     

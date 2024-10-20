@@ -1,33 +1,70 @@
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import { Pressable, View, Text,  StyleSheet, ColorValue } from "react-native";
+import { ProductsContext } from '@/contexts/productsContext';
+import { getProductById } from "@/services/cafe";
+import { useFocusEffect } from "expo-router";
+
 
 export type Props = {
     color: string
     colorText: string
+    id: string
 }
 
 export const ButtonAmount = (props: Props) => {
-    const [count, onChangeCount] = React.useState(0);
+    const product = getProductById(props.id.toString())
+    const { carrinho, dispatchCarrinho } = React.useContext(ProductsContext)
+    const [count, setCount] = React.useState<number>(0)
 
-    const soma = () => {
-        if (count < 999) {
-            onChangeCount(count + 1)
-        }
-    }
+    if(!product) return <Text>Erro</Text>
 
-    const subt = () => {
-        if (count > 0) {
-            onChangeCount(count - 1)
-        }
+    useEffect(()=>{
+      let i = carrinho.cafes.findIndex(item => item.id === product.id)
+      if(i != -1) setCount(carrinho.cafes[i].quantidade)
+      if(i == -1) setCount(0)
+
+
+      console.log('não altera esse')
+    },[carrinho.cafes.length])
+
+    useFocusEffect(()=>{
+      let i = carrinho.cafes.findIndex(item => item.id === product.id)
+      if(i != -1) setCount(carrinho.cafes[i].quantidade)
+      if(i == -1) setCount(0)
+    })
+
+    const soma = async () => {
+      let i = carrinho.cafes.findIndex(i => i.id == product.id)
+  
+      await dispatchCarrinho({
+        type: 'INCREASE',
+        cafe: product,
+        index: i,
+      })
+      console.log(carrinho.curentIndex)
+      console.log(carrinho.cafes)
+      console.log(carrinho.cafes.find(i => i.id == product.id))
+      setCount(carrinho.cafes[carrinho.curentIndex].quantidade)
     }
+    
+      const subt = async () => {
+        let i = carrinho.cafes.findIndex(i => i.id == product.id)
+    
+        await dispatchCarrinho({
+          type: 'DECREASE',
+          cafe: product,
+          index: i,
+        })
+        if(carrinho.curentIndex != -1) setCount(carrinho.cafes[carrinho.curentIndex].quantidade)
+        if(carrinho.curentIndex == -1) setCount(0)
+      }
 
     return(
         <View style={styles.countArea}>
             <Pressable style={[styles.subtSomaArea, {backgroundColor: props.color}] }  onPress={subt}>
                 <Text style={[styles.subtSomaText, {color: props.colorText}]}>–</Text>
             </Pressable>
-
-            <Text style={[styles.count, {color: props.color}] }>{count}</Text>
+            <Text style={[styles.count, {color: props.color}]}>{ count.toString() }</Text>
 
             <Pressable style={[styles.subtSomaArea, {backgroundColor: props.color}] } onPress={soma}>
                 <Text style={[styles.subtSomaText, {color: props.colorText}]}>+</Text>
