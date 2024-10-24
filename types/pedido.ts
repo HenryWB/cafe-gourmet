@@ -1,12 +1,14 @@
-import { Carrinho } from "@/reducers/carrinho"
 import { Cartao } from "./cartao"
 import { Endereco } from "./endereco"
+import { Cafe } from "./cafe"
 
 export type Pedido = {
-    carrinho: Carrinho,
+    id?: string,
+    carrinho: Cafe[],
     valorTotal: string,
     formaPagamento: string,
-    cartao?: Cartao,
-    endereco: Endereco,
-    status: string
+    cartao?: Cartao | null,
+    endereco?: Endereco | null,
+    status: string,
+    observacoes?: Array<string>
 }

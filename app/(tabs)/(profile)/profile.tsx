@@ -5,6 +5,7 @@ import {utils} from '@react-native-firebase/app';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { FirebaseContext } from "@/contexts/FirebaseContext";
+import { ProductsContext } from "@/contexts/productsContext";
 import storage, {ref, getStorage} from '@react-native-firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
@@ -13,9 +14,17 @@ import * as FileSystem from 'expo-file-system';
 
 export default function ScreenProfile() {
     const firebaseContext = React.useContext(FirebaseContext);
+    const productsContext = React.useContext(ProductsContext);
     const [Pass, setNewPass] = React.useState<string>('')
     const [changePass, setPass] = React.useState(false)
     const [loading, setLoading] = React.useState(false)
+
+    useEffect(()=>{
+        
+
+
+    }, [firebaseContext.currentCard, firebaseContext.currentEndereco])
+
 
     function cards() {
         router.navigate(`/cards`);
@@ -31,8 +40,7 @@ export default function ScreenProfile() {
 
     const singOut = () => {
         auth()
-            .signOut()
-            .then(() => router.replace('/'));
+            .signOut().then(() => router.replace('/'));
     }
 
     const handlePassChange = () => {

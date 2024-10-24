@@ -1,10 +1,18 @@
 import { ButtonPadrao } from "@/components/button";
 import { router, Stack } from "expo-router";
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { StyleSheet, SafeAreaView, Text, Pressable, View, TextInput, ScrollView, FlatList} from "react-native";
+import firestore, { query } from '@react-native-firebase/firestore'
+import { FirebaseContext } from "@/contexts/FirebaseContext";
+import { ProductsContext } from "@/contexts/productsContext";
 
 
 export default function ScreenStatus() {
+    const {currentUser} = useContext(FirebaseContext)
+    const {pedido} = useContext(ProductsContext)
+    const [obs, setObs] = useState('')
+    const [listObs, setListObs] = useState<Array<string>>()
+
     function buy() {
         router.navigate('/buy');
     }
@@ -13,30 +21,76 @@ export default function ScreenStatus() {
         router.navigate('/bag');
     }
 
+    useEffect(()=>{
+        listarObservacoes()
+    }, [])
+
+    const listarObservacoes =  () => {
+        if (currentUser?.id) {
+            firestore().collection('Users').doc(currentUser?.id).collection('Pedidos').where('id', '==', pedido?.id).get().then(
+                (snapShot) => {
+                    if (snapShot.empty && currentUser?.id && pedido?.id) {
+                        firestore().collection('Users').doc(currentUser?.id).collection('Pedidos').doc(pedido?.id).collection('Observacoes').get().then(
+                            (snapShot) => {
+                                let lista: Array<string> = []
+                                snapShot.forEach(item => {
+                                    console.log(item.data())
+                                    lista.push(item.data()['observacao'])
+                                })
+                                setListObs(lista)
+                                console.log(lista)
+                            }
+                        )
+                    }
+                }
+            )   
+        }
+    }
+
     const insert = () => {
-        alert('comentário inserido');
+        if(currentUser?.id){
+            firestore().collection('Users').doc(currentUser?.id).collection('Pedidos').where('id', '==', pedido?.id).get().then(
+                (snapShot) => {
+                    if(snapShot.empty && currentUser?.id && pedido?.id){
+                        firestore().collection('Users').doc(currentUser?.id).collection('Pedidos').doc(pedido?.id).collection('Observacoes').add({
+                            observacao: obs,
+                        }).then((element) => {
+                            setObs('')
+                        })
+                    }                 
+            })
+            listarObservacoes()
+            alert('comentário inserido');
+        }
     }
 
     return (
         <SafeAreaView style={styles.container}>
             <Stack.Screen options={{
-                title: 'Pedidos',
+                title: 'Status',
                 headerShown: true,
                 headerStyle: { backgroundColor: '#592C28' },
                 headerTitleStyle: { color: 'white', fontFamily: 'OswaldMedium', fontSize: 28 },
                 headerTintColor: '#F2E8DF',
+                headerBackButtonMenuEnabled: false,
+                headerBackVisible: false
             }} />
 
             <View style={styles.content}>
                 <Text style={styles.h1}>Status do Pedido</Text>
-                <Text style={styles.text}>Verifique o status do seu pedido, logo ele chegará ao seu destino.</Text>
+                <Text style={styles.text}>Seu pedido, logo chegará ao seu destino.</Text>
             </View>
 
-            <View style={styles.map}></View>
+            {/* <View style={styles.map}></View> */}
 
             <View style={styles.content}>
                 <Text style={styles.h1}>Observações:</Text>
-                <TextInput inputMode="text"  style={styles.input} placeholder="Digite uma observação sobre o pedido..."/>
+                <TextInput 
+                    inputMode="text"  
+                    style={styles.input} placeholder="Digite uma observação sobre o pedido..."
+                    onChangeText={t => {setObs(t)}}
+                    value={obs}
+                    />
                 <Pressable style={styles.insert} onPress={insert}>
                     <Text style={styles.insertText}>Inserir</Text>
                 </Pressable>
@@ -45,42 +99,9 @@ export default function ScreenStatus() {
 
             <FlatList
                 style={styles.areaObs}
-                data={
-                    [
-                        {
-                            id: '0',
-                            obs: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit. Tempora quo deleniti repellat nostrum debitis, '
-                        },
-
-                        {
-                            id: '1',
-                            obs: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit. Tempora quo deleniti repellat nostrum debitis, '
-                        },
-
-                        {
-                            id: '2',
-                            obs: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit. Tempora quo deleniti repellat nostrum debitis, '
-                        },
-                         
-                        {
-                            id: '3',
-                            obs: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit. Tempora quo deleniti repellat nostrum debitis, '
-                        },
-
-                        {
-                            id: '4',
-                            obs: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit. Tempora quo deleniti repellat nostrum debitis, '
-                        },
-
-                        {
-                            id: '5',
-                            obs: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit. Tempora quo deleniti repellat nostrum debitis, '
-                        }
-
-                    ]
-                }
-                keyExtractor={item => item.id}
-                renderItem={(item) => <Text style={styles.obsText}>{item.item.obs}</Text>}
+                data={listObs}
+                keyExtractor={(item) => item}
+                renderItem={(item) => <Text style={styles.obsText}>{item.item}</Text>}
             />
 
 

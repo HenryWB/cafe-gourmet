@@ -13,6 +13,14 @@ export const CardCafe = (props: Props) => {
   const { carrinho, dispatchCarrinho } = React.useContext(ProductsContext)
   const [count, setCount] = React.useState<number>(0)
  
+  useEffect(()=>{
+    let i = carrinho.cafes.findIndex(item => item.id === props.cafe.id)
+    if(i != -1) setCount(carrinho.cafes[i].quantidade)
+    if(i == -1) setCount(0)
+
+    if(carrinho.cafes.length == 0) setCount(0)
+
+  },[carrinho.cafes.length])
 
   useFocusEffect(() => {
     let i = carrinho.cafes.findIndex(item => item.id === props.cafe.id)

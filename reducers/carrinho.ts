@@ -6,7 +6,7 @@ export type Carrinho = {
 }
 
 export type CarrinhoAction = {
-  type: 'INCREASE' | 'DECREASE' | 'REMOVE'
+  type: 'INCREASE' | 'DECREASE' | 'REMOVE' | 'CLEAN'
   index: number
   cafe: Cafe
 }
@@ -71,6 +71,14 @@ export const carrinhoReducer = (state: Carrinho, action: CarrinhoAction) => {
 
       console.log('Remove')
       console.log(state.cafes)
+      break
+
+    case 'CLEAN':
+      console.log('entramos no clean')
+      state.cafes = []
+      state.curentIndex = -1
+      return {cafes: state.cafes, curentIndex: state.curentIndex}
+
       break
   }
 

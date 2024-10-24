@@ -4,29 +4,62 @@ import CardCadastroCartao from "@/components/card-cadastros-cartao";
 import { CardPedido } from "@/components/card-pedido";
 import Radio from "@/components/inputs/Radio";
 import { FirebaseContext } from "@/contexts/FirebaseContext";
-import { getAllProducts } from "@/services/cafe";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import React, { useContext, useEffect } from "react";
 import { StyleSheet, SafeAreaView, FlatList, View, Text, Pressable, TextInput, ScrollView } from "react-native";
+import { Endereco } from "@/types/endereco";
+import { Cartao } from "@/types/cartao";
+import firestore from "@react-native-firebase/firestore"
+import axios from "axios";
+import FontAwesome6 from "@expo/vector-icons/build/FontAwesome6";
+import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import { Pedido } from "@/types/pedido";
+import { ProductsContext } from "@/contexts/productsContext";
+
+
 
 type Props = {
     formaPagamento?: string
 }
 
 export default function ScreenBuy() {
+    const {currentUser, setCard, currentCard, setEndereco, currentEndereco} = React.useContext(FirebaseContext)
+
     const [contextCartao, setContextCartao] = React.useState('');
     const [contextEndereco, setContextEndereco] = React.useState('');
-    const [cartaoAtual, setCartao] = React.useState('');
-    const [endereco, setEndereco] = React.useState('');
+
+    const [cartao, setCartao] = React.useState('');
+    const [endereco, setEnderecoView] = React.useState('');
+
+    const [Name, setName] = React.useState('')
+    const [CPF, setCPF] = React.useState('')
+    const [NumeroCartao, setNumeroCartao] = React.useState('')
+    const [date, setDate] = React.useState(new Date());
+    const [CVV, setCVV] = React.useState('')
+
+    const [Cartoes, setCartoes] = React.useState<Array<Cartao> | null>(null)
+
+
+    const [CEP, setCEP] = React.useState('')
+    const [Rua, setRua] = React.useState('')
+    const [Bairro, setBairro] = React.useState('')
+    const [NumeroEndereco, setNumeroEndereco] = React.useState('')
+    const [Complemento, setComplemento] = React.useState('')
+
+    const [Enderecos, setEnderecos] = React.useState<Array<Endereco> | null>(null)
+
     
     const { formaPagamento } =  useLocalSearchParams<Props>();
 
-    const { cartao, dispatchCartao, currentUser } = useContext(FirebaseContext)
-
+    const {carrinho, setPedido, pedido} = React.useContext(ProductsContext)
 
     useEffect(()=>{
-        console.log(cartao)
-    })
+        listarCartoes();
+        listarEnderecos();
+        if(currentCard) setContextCartao('cadastrar')
+        if(currentEndereco) setContextEndereco('cadastrar')
+
+    },[])
 
     const pressContextCartaoNovo = () => {
         setContextCartao('novo')
@@ -44,20 +77,224 @@ export default function ScreenBuy() {
         setContextEndereco('cadastrar')
     }
 
-    const selecionarCartao = (cartao: string)=>{
-        //console.log(cartao)
-        dispatchCartao({
-            type: 'SELECIONAR',
-            index: cartao,
-            user: currentUser,
-        })
-        return cartao
-    }
-
 
     function status() {
-        router.push('/status');
+        if(contextCartao === 'novo'){
+            cadastrarCartao()
+        }
+
+        if(contextEndereco === 'novo'){
+            cadastrarEndereco()
+        }
+
+        if(contextCartao === 'cadastrar'){
+            selecionarCartao()
+        }
+
+        if(contextEndereco === 'cadastrar'){
+            selecionarEndereco()
+        }
+
+
+        if(pedido){
+            let finaliza: Pedido = {
+                carrinho: pedido?.carrinho,
+                endereco: Enderecos?.find(t => t.id == endereco),
+                formaPagamento: pedido?.formaPagamento,
+                status: 'finalizado',
+                valorTotal: pedido?.valorTotal,
+                cartao: pedido?.formaPagamento === 'cartao' ?Cartoes?.find(t => t.id == cartao) : null,
+            }
+            pedido.endereco = Enderecos?.find(t => t.id == endereco)
+            pedido.cartao = pedido?.formaPagamento === 'cartao' ?Cartoes?.find(t => t.id == cartao) : null
+            pedido.status = 'finalizado'
+
+            if(currentUser?.id && pedido){
+                firestore().collection('Users').doc(currentUser?.id).collection('Pedidos').add(finaliza).then((query) => {
+                    console.log(query.id)
+                    finaliza.id = query.id
+                }).finally(()=>{
+                    pedido.id = finaliza.id
+                    console.log(pedido.id)
+                    alert('Pedido realizado com sucesso')
+                    //console.log(pedido)
+                    router.replace('/status');
+                })
+            }
+        }
+        
+        
+
     }
+
+    const onChange = (event: any, selectedDate: any) => {
+        const currentDate = selectedDate;
+        setDate(currentDate);
+    };
+
+    const showMode = (currentMode: any) => {
+        DateTimePickerAndroid.open({
+            value: date,
+            onChange,
+            mode: currentMode,
+            display: 'spinner',
+        });
+    };
+
+    const showDatepicker = () => {
+        showMode('date');
+    };
+
+    const cadastrarCartao = () => {
+        if(currentUser?.id){
+            firestore().collection('Users').doc(currentUser?.id).collection('Cartoes').where('numero', '==', NumeroCartao).get().then(
+                (snapShot) => {
+                    if(snapShot.empty && currentUser?.id){
+                        firestore().collection('Users').doc(currentUser?.id).collection('Cartoes').add({
+                            name: Name,
+                            CPF: CPF,
+                            numero: NumeroCartao,
+                            validade: date,
+                            CVV: CVV
+                        }).then((element) => {
+                            console.log('Cartão cadastrado.')
+                            setCartao(element.id)
+                            setCard(Name)
+                            if(currentUser?.id)firestore().collection('Users').doc(currentUser?.id).update({
+                                cartao: element.id
+                            })
+                        })
+                        listarCartoes()
+                    } else {
+                        return console.log('Cartão já existe.')
+                    }
+                }
+            )   
+        }
+    }
+
+    const selecionarCartao = () => {
+        if(currentUser?.id){
+            firestore().collection('Users').doc(currentUser?.id).update({
+                cartao: cartao
+            }).then(()=>{
+                Cartoes?.forEach(item => {
+                    if(item.id == cartao && item.name) setCard(item.name)
+                })
+                console.log('Cartão selecionado.')
+            })
+        }
+    }
+
+    const listarCartoes = () => {
+        if(currentUser?.id){
+            firestore().collection('Users').doc(currentUser?.id).get().then((item)=>{
+                let idCartao = item.data()
+                if(idCartao != undefined) setCartao(idCartao['cartao'])
+            })
+            firestore().collection('Users').doc(currentUser?.id).collection('Cartoes').get().then(
+                (snapShot) => {
+                    const lista = new Array<Cartao>()
+                    snapShot.forEach(query => {
+                        let validade = new Date(query.data()['validade'])
+                        lista.push(
+                            {
+                                id: query.id,
+                                name: query.data()['name'],
+                                numero: query.data()['numero'],
+                                CPF: query.data()['CPF'],
+                                CVV: query.data()['CVV'],
+                                validade: validade.toLocaleString('pt-BR').substring(3, 10),
+                            }
+                        )
+                    })
+                    setCartoes(lista)
+                }
+            )   
+        }
+    }
+
+    const cadastrarEndereco = () => {
+        if(currentUser?.id){
+            firestore().collection('Users').doc(currentUser?.id).collection('Enderecos').where('numero', '==', NumeroEndereco).get().then(
+                (snapShot) => {
+                    if(snapShot.empty && currentUser?.id){
+                        firestore().collection('Users').doc(currentUser?.id).collection('Enderecos').add({
+                            CEP: CEP,
+                            rua: Rua,
+                            bairro: Bairro,
+                            numero: NumeroEndereco,
+                            complemento: Complemento
+                        }).then((element) => {
+                            console.log('Endereço cadastrado.')
+                            setEnderecoView(element.id)
+                            setEndereco(Rua)
+                            if(currentUser?.id)firestore().collection('Users').doc(currentUser?.id).update({
+                                endereco: element.id
+                            })
+                        })
+                    } else {
+                        return console.log('Endereço já existe.')
+                    }
+                    listarEnderecos()
+                }
+            )   
+        }
+    }
+
+    const selecionarEndereco = () => {
+        if(currentUser?.id){
+            firestore().collection('Users').doc(currentUser?.id).update({
+                endereco: endereco
+            }).then(()=>{
+                Enderecos?.forEach(item => {
+                    if(item.id == endereco && item.rua) setEndereco(item.rua)
+                })
+                console.log('Endereço selecionado.')
+            })
+        }
+    }
+
+    const listarEnderecos = () => {
+        if(currentUser?.id){
+            firestore().collection('Users').doc(currentUser?.id).get().then((item)=>{
+                let idEndereco = item.data()
+                if(idEndereco != undefined) setEnderecoView(idEndereco['endereco'])
+            })
+
+            firestore().collection('Users').doc(currentUser?.id).collection('Enderecos').get().then(
+                (snapShot) => {
+                    const lista = new Array<Endereco>()
+                    snapShot.forEach(query => {
+                        lista.push(
+                            {
+                                id: query.id,
+                                rua: query.data()['rua'],
+                                numero: query.data()['numero'],
+                                CEP: query.data()['CEP'],
+                                bairro: query.data()['bairro'],
+                                complemento: query.data()['complemento'],
+                            }
+                        )
+                    })
+                    setEnderecos(lista)
+                }
+            )   
+        }
+    }
+
+    const consultaCEP =  async () => {
+        await axios.get(`https://viacep.com.br/ws/${CEP}/json/`).then((response) => {
+            setRua(response.data['logradouro'])
+            setBairro(response.data['bairro'])
+        }
+        ).catch(e => {
+            //console.log(e)
+            alert('Não foi possível localizar esse CEP.')
+        })
+    }
+
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -98,6 +335,7 @@ export default function ScreenBuy() {
                                     <TextInput
                                         placeholder="Digite o nome no seu cartão..."
                                         inputMode="text"
+                                        onChangeText={t => {setName(t)}}
                                         style={[styles.input, { textTransform: 'uppercase' }]}
                                     />
 
@@ -105,53 +343,43 @@ export default function ScreenBuy() {
                                     <TextInput
                                         placeholder="Digite o seu CPF..."
                                         inputMode="numeric"
+                                        onChangeText={t => {setCPF(t)}}
                                         style={styles.input}
                                     />
 
                                     <Text style={styles.label}>Número do cartão:</Text>
                                     <TextInput
                                         placeholder="Digite o número do seu cartão..."
-                                        inputMode="numeric"
+                                        inputMode="text"
+                                        onChangeText={t => {setNumeroCartao(t)}}
                                         style={styles.input}
                                     />
 
+
                                     <View style={styles.inputArea}>
-                                        <View >
-                                            <Text style={styles.label}>Validade:</Text>
+                                        <Text style={styles.label}>Data de Validade:</Text>
+                                        <Pressable onPress={showDatepicker} style={styles.inputArea}>
+                                            <FontAwesome6 name='calendar-days' size={21} color={'#592C28'} />
+                                            <Text style={styles.label}>{date.toLocaleString('pt-BR').substring(3, 10)}</Text>
+                                        </Pressable>
+                                    </View>
+                                    <View style={styles.inputArea}>
 
-                                            <View style={styles.inputArea}>
-                                                <TextInput
-                                                    placeholder="Mês..."
-                                                    inputMode="numeric"
-                                                    style={styles.inputSmall}
-                                                />
-                                                <Text style={styles.label}> / </Text>
-                                                <TextInput
-                                                    placeholder="Ano..."
-                                                    inputMode="numeric"
-                                                    style={styles.inputSmall}
-                                                />
-                                            </View>
-
-
-                                        </View>
-
-                                        <View>
-                                            <Text style={styles.label}>CVV:</Text>
-                                            <TextInput
-                                                placeholder="CVV..."
-                                                inputMode="numeric"
-                                                style={styles.inputSmall}
-                                            />
-                                        </View>
+                                        <Text style={styles.labelLine}>CVV:</Text>
+                                        <TextInput
+                                            placeholder="CVV..."
+                                            inputMode="numeric"
+                                            onChangeText={t => { setCVV(t) }}
+                                            style={styles.inputSmall}
+                                        />
                                     </View>
                                 </ScrollView>
                             }
 
                             {contextCartao === 'cadastrar' &&
                                 <ScrollView style={styles.scrollInput} nestedScrollEnabled={true}>
-                                    <CardCadastroCartao options={cartao.cartoes}
-                                        checkedValue={cartao.curentIndex}
+                                    <CardCadastroCartao options={Cartoes}
+                                        checkedValue={cartao}
                                         onChange={setCartao}
                                     />
                                 </ScrollView>
@@ -185,6 +413,8 @@ export default function ScreenBuy() {
                                             <TextInput
                                                 placeholder="CEP..."
                                                 inputMode="numeric"
+                                                onChangeText={t => {setCEP(t)}}
+                                                onEndEditing={consultaCEP}
                                                 style={styles.inputSmallRow}
                                             />
                                         </View>
@@ -196,33 +426,36 @@ export default function ScreenBuy() {
                                             <TextInput
                                                 placeholder="Número..."
                                                 inputMode="numeric"
+                                                onChangeText={t => {setNumeroEndereco(t)}}
                                                 style={styles.inputSmallRow}
                                             />
                                         </View>
                                     </View>
-
-                                
-                                    
                                 </View>
 
                                 <Text style={styles.label}>Rua:</Text>
                                 <TextInput 
                                     placeholder="Digite o nome no seu cartão..." 
                                     inputMode="text"
+                                    onChangeText={t => {setRua(t)}}
+                                    value={Rua}
                                     style={[styles.input, {textTransform: 'uppercase'}]}
                                 />
                                 
                                 <Text style={styles.label}>Bairro:</Text>
                                 <TextInput 
-                                    placeholder="Digite o seu CPF..." 
-                                    inputMode="numeric"
+                                    placeholder="Digite o seu Bairro..." 
+                                    inputMode="text"
+                                    onChangeText={t => {setBairro(t)}}
+                                    value={Bairro}
                                     style={styles.input}
                                 />
 
                                 <Text style={styles.label}>Complemento:</Text>
                                 <TextInput 
-                                    placeholder="Digite o número do seu cartão..." 
-                                    inputMode="numeric"
+                                    placeholder="Coloque informações complementares..." 
+                                    inputMode="text"
+                                    onChangeText={t => {setComplemento(t)}}
                                     style={styles.input}
                                 />
 
@@ -232,9 +465,9 @@ export default function ScreenBuy() {
                        
                        {contextEndereco === 'cadastrar' &&
                         <ScrollView style={styles.scrollInput} nestedScrollEnabled = {true}>
-                            <CardCadastroEndereco options={[]} 
+                            <CardCadastroEndereco options={Enderecos} 
                             checkedValue={endereco}
-                            onChange={setEndereco}
+                            onChange={setEnderecoView}
                         />
                         </ScrollView>
                         }
@@ -351,7 +584,9 @@ const styles = StyleSheet.create({
 
     inputArea:{
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        gap: 10,
+        marginBottom: 5,
+        alignItems: 'center'
     },
 
     scrollInput:{
@@ -395,4 +630,12 @@ const styles = StyleSheet.create({
         height: '100%',
     },
 
+    labelLine: {
+        color: '#592C28',
+        alignSelf: 'flex-start',
+        fontSize: 16,
+        fontFamily: 'OswaldRegular',
+        height: '100%',
+        lineHeight: 40
+    },
 });

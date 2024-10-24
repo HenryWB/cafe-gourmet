@@ -6,6 +6,7 @@ import  firebase  from '@react-native-firebase/app';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import { FirebaseContext } from '@/contexts/FirebaseContext';
+import { ProductsContext } from '@/contexts/productsContext';
 
 
 type Props = {
@@ -15,6 +16,7 @@ type Props = {
 
 export default function ScreenSignup() {
     const firebaseContext  = React.useContext(FirebaseContext);
+    const productsContext  = React.useContext(ProductsContext);
 
     const { email } = useLocalSearchParams<Props>();
 
@@ -50,6 +52,21 @@ export default function ScreenSignup() {
                     tipo: 'cliente',
                 }
                 firebaseContext.setUser(newUser)
+                productsContext.dispatchCarrinho({
+                    type: 'CLEAN',
+                    cafe: {
+                        id: '',
+                        desc: '',
+                        img: '',
+                        preco: '',
+                        quantidade: 0,
+                        titulo: '',
+                        gramas: '',
+                    },
+                    index: -1
+                })
+
+
                 router.navigate('/products');
             });
         })

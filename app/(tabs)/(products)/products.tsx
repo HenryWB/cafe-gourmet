@@ -4,7 +4,6 @@ import { CardCafe } from '@/components/card-cafe';
 import { Cafe } from "@/types/cafe";
 import { Stack, Tabs } from 'expo-router';
 import { FontAwesome, FontAwesome6 } from '@expo/vector-icons';
-import { getAllProducts } from '@/services/cafe';
 import { ProductsContext } from '@/contexts/productsContext';
 
 export default function ScreenProducts() {

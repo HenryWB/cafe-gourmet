@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, View, Text, TextInput, SafeAreaView, StatusBar, ViewBase, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import auth from '@react-native-firebase/auth';
 import { ButtonPadrao } from '@/components/button';
 import firestore from '@react-native-firebase/firestore';
 import { FirebaseContext } from '@/contexts/FirebaseContext';
+import { ProductsContext } from '@/contexts/productsContext';
 import { User } from '@/types/user';
 
 
@@ -12,6 +13,23 @@ export default function ScreenLogin() {
   const [Email, setEmail] = React.useState<string>('')
   const [Pass, setPass] = React.useState<string>('')
   const firebaseContext = React.useContext(FirebaseContext);
+  const productsContext = React.useContext(ProductsContext);
+
+  useEffect(()=>{
+    productsContext.dispatchCarrinho({
+      type: 'CLEAN',
+      cafe: {
+          id: '',
+          desc: '',
+          img: '',
+          preco: '',
+          quantidade: 0,
+          titulo: '',
+          gramas: '',
+      },
+      index: -1
+  })
+  }, [])
 
   const handleForgot = () =>{
     router.navigate('/auth/forgot')
@@ -57,6 +75,20 @@ export default function ScreenLogin() {
             })
             
           })
+          productsContext.dispatchCarrinho({
+            type: 'CLEAN',
+            cafe: {
+                id: '',
+                desc: '',
+                img: '',
+                preco: '',
+                quantidade: 0,
+                titulo: '',
+                gramas: '',
+            },
+            index: -1
+        })
+
           return router.navigate('/products')
         })
       .catch((error) => 

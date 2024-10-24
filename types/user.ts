@@ -9,4 +9,5 @@ export type User = {
     'tel'?: string | null,
     'tipo'?: string | null,
     'cartao'?: string | null,
+    'endereco'?: string | null,
 }

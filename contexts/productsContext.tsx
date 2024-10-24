@@ -53,7 +53,6 @@ export const ProductsProvider: React.FC<IProductsProvider> = ({children}) => {
             })
             setProducts(data)
         })
-
         //console.log(carrinho.cafes)
     }, []);
 

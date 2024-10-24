@@ -11,7 +11,7 @@ import { Cartao } from "@/types/cartao";
 
 //alterar nome para  setPayment
 export default function ScreenCards() {
-    const {currentUser, setCard} = React.useContext(FirebaseContext)
+    const {currentUser, setCard, currentCard} = React.useContext(FirebaseContext)
     const [contextCartao, setContextCartao] = React.useState('novo');
     const [cartao, setCartao] = React.useState('');
 
@@ -25,6 +25,7 @@ export default function ScreenCards() {
 
     useEffect(()=>{
         listarCartoes();
+        if(currentCard) setContextCartao('cadastrar')
     },[])
 
     const pressContextCartaoNovo = () => {
@@ -37,7 +38,6 @@ export default function ScreenCards() {
 
     const onChange = (event: any, selectedDate: any) => {
         const currentDate = selectedDate;
-        // console.log(currentDate.toLocaleString('pt-BR').substr(0, 10))
         setDate(currentDate);
     };
 
@@ -68,6 +68,7 @@ export default function ScreenCards() {
                         }).then((element) => {
                             alert('Cartão cadastrado.')
                             setCartao(element.id)
+                            setCard(Name)
                             if(currentUser?.id)firestore().collection('Users').doc(currentUser?.id).update({
                                 cartao: element.id
                             })
@@ -87,7 +88,7 @@ export default function ScreenCards() {
                 cartao: cartao
             }).then(()=>{
                 Cartoes?.forEach(item => {
-                    if(item.id == cartao && item.id) setCard(item.id)
+                    if(item.id == cartao && item.name) setCard(item.name)
                 })
                 alert('Cartão selecionado.')
             })
@@ -100,7 +101,6 @@ export default function ScreenCards() {
                 let idCartao = item.data()
                 if(idCartao != undefined) setCartao(idCartao['cartao'])
             })
-
             firestore().collection('Users').doc(currentUser?.id).collection('Cartoes').get().then(
                 (snapShot) => {
                     const lista = new Array<Cartao>()
@@ -185,8 +185,6 @@ export default function ScreenCards() {
                                     <FontAwesome6 name='calendar-days' size={21} color={'#592C28'}/>
                                     <Text style={styles.label}>{date.toLocaleString('pt-BR').substring(3, 10)}</Text>
                                 </Pressable>
-
-                                
                             </View>
 
                             <View style={styles.inputArea}>

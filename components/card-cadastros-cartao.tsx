@@ -17,8 +17,6 @@ export const CardCadastroCartao = (props: Props) => {
             {
                 props.options == null || props.options.length == 0 ? <Text style={styles.title}>Não há item cadastrado!</Text> :
                 props.options.map((option)=>{
-                    console.log('Esse é o id: ' + props.checkedValue)    
-
                 let active =  props.checkedValue == option.id 
                 return(
                     <Pressable 

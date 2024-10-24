@@ -2,27 +2,40 @@ import { Cafe } from "@/types/cafe";
 import { ButtonPadrao } from "@/components/button";
 import { CardPedido } from "@/components/card-pedido";
 import Radio from "@/components/inputs/Radio";
-import { getAllProducts } from "@/services/cafe";
 import { router, Stack, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect } from "react";
 import { StyleSheet, SafeAreaView, FlatList, View, Text } from "react-native";
-import { green } from "react-native-reanimated/lib/typescript/reanimated2/Colors";
 import { ProductsContext } from "@/contexts/productsContext";
-import { reload } from "@react-native-firebase/auth";
+import firestore from "@react-native-firebase/firestore"
+import { FirebaseContext } from "@/contexts/FirebaseContext";
+import { Pedido } from "@/types/pedido";
 
 export default function ScreenCar() {
     const [forma, setForma] = React.useState('cartao');
-    const {carrinho} = React.useContext(ProductsContext)
+    const {carrinho, setPedido} = React.useContext(ProductsContext)
+    const {currentUser} = React.useContext(FirebaseContext)
     const [lista, setLista]  = React.useState(0)
     const [valor, setValor] = React.useState('')
     const [frete, setFrete] = React.useState('')
     const [total, setTotal] = React.useState('')
 
     function buy() {
-        const params = new URLSearchParams();
+        const params = new URLSearchParams()
         params.set('formaPagamento', forma)
-        router.push(`/buy?${params.toString()}`) 
+        let pedido: Pedido = {
+            id: '',
+            carrinho: carrinho.cafes,
+            endereco: null,
+            formaPagamento: forma,
+            status: 'nao-finalizado',
+            valorTotal: total,
+            cartao: null
+        }
+        setPedido(pedido)
+        console.log(pedido)
+        router.push(`/buy?${params.toString()}`)
     }
+
 
     useEffect(() => {
         setLista(carrinho?.cafes.length)

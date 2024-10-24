@@ -10,7 +10,7 @@ import axios from "axios"
 
 //alterar nome para  setPayment
 export default function ScreenEnderecos() {
-    const {currentUser, setEndereco} = React.useContext(FirebaseContext)
+    const {currentUser, setEndereco, currentEndereco} = React.useContext(FirebaseContext)
     const [contextEndereco, setContextEndereco] = React.useState('novo');
     const [endereco, setEnderecoView] = React.useState('');
 
@@ -24,6 +24,9 @@ export default function ScreenEnderecos() {
 
     useEffect(()=>{
         listarEnderecos();
+
+        if(currentEndereco) setContextEndereco('cadastrar')
+
     },[])
 
     const pressContextEnderecoNovo = () => {
@@ -49,7 +52,7 @@ export default function ScreenEnderecos() {
                         }).then((element) => {
                             alert('Endereço cadastrado.')
                             setEnderecoView(element.id)
-
+                            setEndereco(Rua)
                             if(currentUser?.id)firestore().collection('Users').doc(currentUser?.id).update({
                                 endereco: element.id
                             })
@@ -69,7 +72,7 @@ export default function ScreenEnderecos() {
                 endereco: endereco
             }).then(()=>{
                 Enderecos?.forEach(item => {
-                    if(item.id == endereco && item.rua) setEndereco(item.id)
+                    if(item.id == endereco && item.rua) setEndereco(item.rua)
                 })
                 alert('Endereço selecionado.')
             })
@@ -160,7 +163,7 @@ export default function ScreenEnderecos() {
                             <Text style={styles.label}>Rua:</Text>
                             <TextInput
                                 placeholder="Digite a sua Rua..."
-                                inputMode="numeric"
+                                inputMode="text"
                                 onChangeText={t => {setRua(t)}}
                                 value={Rua}
                                 style={styles.input}

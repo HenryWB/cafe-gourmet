@@ -1,5 +1,5 @@
-import { CartaoAction, cartaoReducer, CartaoState } from "@/reducers/cartao";
 import { Cartao } from "@/types/cartao";
+import { Endereco } from "@/types/endereco";
 import { User } from "@/types/user";
 import app from "@react-native-firebase/app";
 import auth from "@react-native-firebase/auth";
@@ -14,8 +14,6 @@ export interface IFirebaseContext {
     setCard: React.Dispatch<React.SetStateAction<String | null>>
     currentEndereco: String | null,
     setEndereco: React.Dispatch<React.SetStateAction<String | null>>
-    cartao: CartaoState,
-    dispatchCartao: React.Dispatch<CartaoAction>
 }
 
 export interface IFirebaseProvider {
@@ -27,25 +25,16 @@ export const FirebaseContext = createContext({
     loading: true,
     currentUser: null,
     currentCard: null,
-    currentEndereco: null
+    currentEndereco: null,
 } as IFirebaseContext);
-
-const initialStateCartao: CartaoState = {
-    cartoes: [],
-    currentCartao: null,                       
-    curentIndex: '',
-    name: '',
-}
 
 
 export const FirebaseProvider: React.FC<IFirebaseProvider> = ({children}) => {
     const [ loading, setLoading ] = useState(true);
     const [ currentUser, setUser ] = useState<User | null>(null);
+
     const [ currentCard, setCard ] = useState<String | null>(null);
     const [ currentEndereco, setEndereco ] = useState<String | null>(null);
-
-    const [ cartao, dispatchCartao ] = useReducer(cartaoReducer, initialStateCartao)
-
 
     const card = ()=>{
         if(auth().currentUser != null){
@@ -55,6 +44,7 @@ export const FirebaseProvider: React.FC<IFirebaseProvider> = ({children}) => {
                         let cartaoCadastro = item.data() 
                         if(cartaoCadastro){
                             setCard(cartaoCadastro['name'])
+                            console.log(cartaoCadastro['name'])
                         }
                     })
 
@@ -63,6 +53,7 @@ export const FirebaseProvider: React.FC<IFirebaseProvider> = ({children}) => {
                         let enderecoCadastro = item.data()
                         if(enderecoCadastro){
                             setEndereco(enderecoCadastro['rua'])
+                            console.log(enderecoCadastro['rua'])
                         }
                     })
                 })
@@ -70,59 +61,47 @@ export const FirebaseProvider: React.FC<IFirebaseProvider> = ({children}) => {
         }   
     }
 
-
     useEffect(() => {
-        let newUser: User
+        setCard(null)
+        setEndereco(null)
 
         const subscriber = auth().onAuthStateChanged((user) => {
-            setLoading(false);
-            if(auth().currentUser != null){
-                firestore().collection('Users').where('email', '==', auth().currentUser?.email).get().then((querySnapshot) => {
-                    querySnapshot.forEach(documentSnapshot => {
-                        newUser = {
-                            id: documentSnapshot.id,
-                            email: documentSnapshot.data()['email'],
-                            name: documentSnapshot.data()['name'],
-                            tel: documentSnapshot.data()['tel'],
-                            nascimento: documentSnapshot.data()['nascimento'],
-                            tipo: documentSnapshot.data()['tipo'],
-                            cartao: documentSnapshot.data()['cartao']
-                        }
-                        setUser(auth().currentUser)
-                    })
-
-                    dispatchCartao({
-                        type: 'LISTAR',
-                        user: newUser,
-                    })
-                    
-                }).then(() => {
-                    if (newUser.cartao) {
-                        dispatchCartao({
-                            type: 'SELECIONAR',
-                            index: newUser.cartao,
-                            user: newUser,
+            if (auth().currentUser != null) {
+                firestore().collection('Users').where('email', '==', auth().currentUser?.email).get()
+                    .then((querySnapshot) => {
+                        querySnapshot.forEach(item=>{
+                            setUser({
+                                id: item.id,
+                                cartao: item.data()['cartao'],
+                                endereco: item.data()['endereco'],
+                                email: item.data()['email'],
+                                name: item.data()['name'],
+                                tel: item.data()['tel'],
+                                nascimento: item.data()['nascimento'],
+                                tipo: item.data()['tipo'],
+                            })
                         })
-                    }
-                })
+                        setLoading(false);
+                    }).then(()=>{
+                        card()
+                    })
+            }
+
+            if (auth().currentUser == null) {
+                setUser(null)
+                setEndereco(null)
+                setCard(null)
+                setLoading(false);
             }
         });
-
-        setTimeout(()=>{
-            console.log('Ultimo a Executar: ')
-            console.log(cartao)
-        },8000)
-
-        card()
-
         return subscriber;
     }, []);
 
-    if(loading) return null
+    if (loading) return null
 
 
     return (
-        <FirebaseContext.Provider value={{ loading, currentUser, setUser, currentCard, setCard, currentEndereco, setEndereco, cartao, dispatchCartao  }}>
+        <FirebaseContext.Provider value={{loading, currentUser, setUser, currentCard, setCard, currentEndereco, setEndereco}}>
             {children}
         </FirebaseContext.Provider>
     );
