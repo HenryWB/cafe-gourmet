@@ -1,9 +1,8 @@
-import { Cafe } from '@/.expo/types/cafe';
-import { router } from 'expo-router';
-import React from 'react';
-import { useState } from 'react';
+import { Cafe } from '@/types/cafe';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { View, Image, StyleSheet, Text, Pressable } from 'react-native';
-import { ButtonAmount } from './button-amount';
+import { ProductsContext } from '@/contexts/productsContext';
 
 
 export type Props = {
@@ -11,26 +10,76 @@ export type Props = {
 };
 
 export const CardCafe = (props: Props) => {
-  const [count, onChangeCount] = React.useState(0)
+  const { carrinho, dispatchCarrinho, quantidadeItens, setQuantidadeItens } = React.useContext(ProductsContext)
+  const [count, setCount] = React.useState<number>(0)
+ 
+  useEffect(()=>{
+    let i = carrinho.cafes.findIndex(item => item.id === props.cafe.id)
+    if(i != -1) {
+      setCount(carrinho.cafes[i].quantidade)
+      setQuantidadeItens(carrinho.cafes[i].quantidade)
+    }
+    if(i == -1) {
+      setCount(0)
+      setQuantidadeItens(0)
+    }
 
+    if(carrinho.cafes.length == 0) {
+      setCount(0)
+      setQuantidadeItens(0)
+    }
+
+  },[carrinho.cafes.length, quantidadeItens])
+
+  useFocusEffect(() => {
+    let i = carrinho.cafes.findIndex(item => item.id === props.cafe.id)
+    if(i != -1) {
+      setCount(carrinho.cafes[i].quantidade)
+      setQuantidadeItens(carrinho.cafes[i].quantidade)
+    }
+    if(i == -1) {
+      setCount(0)
+      setQuantidadeItens(0)
+    }
+  })
 
   const infos = () =>{
-    router.navigate(`/infos/${props.cafe.id}`) // será dinâmica
+    router.navigate(`/infos/${props.cafe.id}` ) // será dinâmica
   }
 
-  const soma = () =>{
-    if(count < 999){
-      onChangeCount(count + 1)
+  const heandleClickAdd = async () => {
+    let i = carrinho.cafes.findIndex(i => i.id == props.cafe.id)
+
+    await dispatchCarrinho({
+      type: 'INCREASE',
+      cafe: props.cafe,
+      index: i,
+    })
+    console.log(carrinho.curentIndex)
+    console.log(carrinho.cafes)
+    console.log(carrinho.cafes.find(i => i.id == props.cafe.id))
+    setCount(carrinho.cafes[carrinho.curentIndex].quantidade)
+    setQuantidadeItens(carrinho.cafes[carrinho.curentIndex].quantidade)
+  }
+
+  const heandleClickSub  = async () => {
+    let i = carrinho.cafes.findIndex(i => i.id == props.cafe.id)
+
+    await dispatchCarrinho({
+      type: 'DECREASE',
+      cafe: props.cafe,
+      index: i,
+    })
+    if(i != -1) {
+      setCount(carrinho.cafes[carrinho.curentIndex].quantidade)
+      setQuantidadeItens(carrinho.cafes[carrinho.curentIndex].quantidade)
+    }
+    if(i == -1) {
+      setCount(0)
+      setQuantidadeItens(0)
     }
   }
 
-  const subt = () =>{
-    if(count > 0){
-      onChangeCount(count-1)
-    }
-  }
-
-  
   return (
     <View style={styles.box}>
       <Image style={styles.img} source={{uri: props.cafe.img}}/>
@@ -44,7 +93,7 @@ export const CardCafe = (props: Props) => {
           </View>
           
 
-          <Text style={styles.attr}>R$ {props.cafe.preco.toFixed(2)} | {props.cafe.gramas} g</Text>
+          <Text style={styles.attr}>R$ {props.cafe.preco} | {props.cafe.gramas} g</Text>
 
         </View>
 
@@ -53,21 +102,21 @@ export const CardCafe = (props: Props) => {
             <Text style={styles.textInfo}>i</Text>
           </Pressable>
           
-          {count <= 0 &&
-            <Pressable style={styles.add} onPress={soma}>
-            <Text style={styles.addText}>+</Text>
+          {count == 0 &&
+            <Pressable style={styles.add} onPress={heandleClickAdd}>
+              <Text style={styles.addText}>+</Text>
             </Pressable>
           }
           
-          {count > 0 && 
+          {count != 0 && 
             <View style={styles.countArea}>
-              <Pressable style={styles.subtSomaArea} onPress={subt}>
+              <Pressable style={styles.subtSomaArea} onPress={heandleClickSub}>
               <Text style={styles.subtSomaText}>–</Text>
               </Pressable>
 
               <Text style={styles.count}>{count}</Text>
 
-              <Pressable style={styles.subtSomaArea} onPress={soma}>
+              <Pressable style={styles.subtSomaArea} onPress={heandleClickAdd}>
               <Text style={styles.subtSomaText}>+</Text>
               </Pressable>
             </View>

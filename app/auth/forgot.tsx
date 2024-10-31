@@ -1,13 +1,22 @@
 import React from 'react';
-import { StyleSheet, View, Text, TextInput, SafeAreaView, StatusBar, Pressable } from 'react-native';
-import { ButtonRoute } from '@/components/button-route';
+import { StyleSheet, View, Text, TextInput, SafeAreaView, StatusBar, Pressable, Alert } from 'react-native';
 import { router } from 'expo-router';
+import { ButtonPadrao } from '@/components/button';
+import auth from '@react-native-firebase/auth'
 
 export default function ScreenForgot() {
     const [Email, setEmail] = React.useState('')
 
     const handleLogin = () => {
         router.navigate('/auth/login')
+    }
+    const recuperarSenha = ()=>{
+        auth().sendPasswordResetEmail(Email).then(() => {
+            alert('Email para recuperar a senha foi enviado')
+            router.navigate('/auth/login')
+        }).catch(e => {
+            console.log(e);
+        })
     }
 
     return (
@@ -24,7 +33,7 @@ export default function ScreenForgot() {
                     onChangeText={t => setEmail(t)}
                 />
 
-                <ButtonRoute title='Enviar' width={120} route={'/auth/login'} methodRout='navigate' />
+                <ButtonPadrao title='Enviar' width={120} onPress={recuperarSenha} height={50} marginTop={25}/>
 
                 <Pressable style={styles.login} onPress={handleLogin}>
                     <Text style={styles.textLogin}>Já possui cadastro? <Text>Clique aqui.</Text></Text>

@@ -4,7 +4,7 @@ export default function StackLaout(){
     return (
         <Stack>
             <Stack.Screen name='profile'/>
-            <Stack.Screen name='paymant'/>
+            <Stack.Screen name='cards'/>
             <Stack.Screen name='setProfile'/>
         </Stack>
     );
