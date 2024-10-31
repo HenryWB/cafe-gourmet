@@ -26,6 +26,10 @@ export default function ScreenInfos() {
         }
        )
     }
+
+    const bag = () => {
+        router.navigate('/(bag)/carrinho')
+      }
     
     return (
 
@@ -36,7 +40,11 @@ export default function ScreenInfos() {
                 headerStyle: { backgroundColor: '#592C28' },
                 headerTitleStyle: { color: 'white', fontFamily: 'OswaldMedium', fontSize: 28 },
                 headerTintColor: '#F2E8DF',
-                headerRight: ({ tintColor }) => <Pressable><FontAwesome6 name='bag-shopping' size={28} color={tintColor} /></Pressable>
+                headerRight: ({ tintColor }) => 
+                    <Pressable style={styles.carrinho} onPress={bag}>
+                        <FontAwesome6 name='bag-shopping' size={28} color={tintColor} style={styles.carrinhoIcon} />
+                        <Text style={styles.carrinhoText}>{carrinho.cafes.length > 0 ? carrinho.cafes.length.toString() : '0'}</Text>
+                    </Pressable>,
             }} />
 
             <View>
@@ -129,5 +137,22 @@ const styles = StyleSheet.create({
         fontSize: 24,
         marginBottom: 10,
         color: '#592C28',
-    },    
+    },
+
+    carrinho:{
+        justifyContent: 'center',
+        alignItems: 'center'
+      },
+    
+      carrinhoIcon:{
+      },
+    
+      carrinhoText:{
+        marginTop: -21,
+        color: '#592C28',
+        fontFamily: 'OswaldRegular',
+        textAlign: 'center',
+        borderRadius: 10,
+        fontSize: 14
+      },
 });

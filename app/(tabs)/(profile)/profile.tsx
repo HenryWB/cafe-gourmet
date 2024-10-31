@@ -86,7 +86,12 @@ export default function ScreenProfile() {
                 <View style={styles.linha}></View>
 
                 <Pressable onPress={pickImage}>
+                    {!auth().currentUser?.photoURL &&
+                     <Image style={styles.image} source={{ uri: 'https://firebasestorage.googleapis.com/v0/b/cafe-258cc.appspot.com/o/images.png?alt=media&token=19ad755b-6f53-477d-a077-bf58a4844e2c'}} /> 
+                    }
+                    {auth().currentUser?.photoURL &&
                         <Image style={styles.image} source={loading ?{ uri: 'https://firebasestorage.googleapis.com/v0/b/cafe-258cc.appspot.com/o/images.png?alt=media&token=19ad755b-6f53-477d-a077-bf58a4844e2c'} : {uri: auth().currentUser?.photoURL?.toString()} } /> 
+                    }
                 </Pressable>
                 
             </View>

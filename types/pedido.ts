@@ -3,7 +3,7 @@ import { Endereco } from "./endereco"
 import { Cafe } from "./cafe"
 
 export type Pedido = {
-    id?: string,
+    id: string,
     carrinho: Cafe[],
     valorTotal: string,
     formaPagamento: string,

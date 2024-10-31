@@ -10,22 +10,37 @@ export type Props = {
 };
 
 export const CardCafe = (props: Props) => {
-  const { carrinho, dispatchCarrinho } = React.useContext(ProductsContext)
+  const { carrinho, dispatchCarrinho, quantidadeItens, setQuantidadeItens } = React.useContext(ProductsContext)
   const [count, setCount] = React.useState<number>(0)
  
   useEffect(()=>{
     let i = carrinho.cafes.findIndex(item => item.id === props.cafe.id)
-    if(i != -1) setCount(carrinho.cafes[i].quantidade)
-    if(i == -1) setCount(0)
+    if(i != -1) {
+      setCount(carrinho.cafes[i].quantidade)
+      setQuantidadeItens(carrinho.cafes[i].quantidade)
+    }
+    if(i == -1) {
+      setCount(0)
+      setQuantidadeItens(0)
+    }
 
-    if(carrinho.cafes.length == 0) setCount(0)
+    if(carrinho.cafes.length == 0) {
+      setCount(0)
+      setQuantidadeItens(0)
+    }
 
-  },[carrinho.cafes.length])
+  },[carrinho.cafes.length, quantidadeItens])
 
   useFocusEffect(() => {
     let i = carrinho.cafes.findIndex(item => item.id === props.cafe.id)
-    if(i != -1) setCount(carrinho.cafes[i].quantidade)
-    if(i == -1) setCount(0)
+    if(i != -1) {
+      setCount(carrinho.cafes[i].quantidade)
+      setQuantidadeItens(carrinho.cafes[i].quantidade)
+    }
+    if(i == -1) {
+      setCount(0)
+      setQuantidadeItens(0)
+    }
   })
 
   const infos = () =>{
@@ -44,6 +59,7 @@ export const CardCafe = (props: Props) => {
     console.log(carrinho.cafes)
     console.log(carrinho.cafes.find(i => i.id == props.cafe.id))
     setCount(carrinho.cafes[carrinho.curentIndex].quantidade)
+    setQuantidadeItens(carrinho.cafes[carrinho.curentIndex].quantidade)
   }
 
   const heandleClickSub  = async () => {
@@ -54,8 +70,14 @@ export const CardCafe = (props: Props) => {
       cafe: props.cafe,
       index: i,
     })
-    if(carrinho.curentIndex != -1) setCount(carrinho.cafes[carrinho.curentIndex].quantidade)
-    if(carrinho.curentIndex == -1) setCount(0)
+    if(i != -1) {
+      setCount(carrinho.cafes[carrinho.curentIndex].quantidade)
+      setQuantidadeItens(carrinho.cafes[carrinho.curentIndex].quantidade)
+    }
+    if(i == -1) {
+      setCount(0)
+      setQuantidadeItens(0)
+    }
   }
 
   return (

@@ -10,9 +10,9 @@ import firestore from "@react-native-firebase/firestore"
 import { FirebaseContext } from "@/contexts/FirebaseContext";
 import { Pedido } from "@/types/pedido";
 
-export default function ScreenCar() {
+export default function ScreenCarrinho() {
     const [forma, setForma] = React.useState('cartao');
-    const {carrinho, setPedido} = React.useContext(ProductsContext)
+    const {carrinho, setPedido, quantidadeItens, setQuantidadeItens} = React.useContext(ProductsContext)
     const {currentUser} = React.useContext(FirebaseContext)
     const [lista, setLista]  = React.useState(0)
     const [valor, setValor] = React.useState('')
@@ -33,19 +33,21 @@ export default function ScreenCar() {
         }
         setPedido(pedido)
         console.log(pedido)
-        router.push(`/buy?${params.toString()}`)
+        router.push(`/compra?${params.toString()}`)
     }
 
 
     useEffect(() => {
-        setLista(carrinho?.cafes.length)
+        // setLista(carrinho?.cafes.length)
 
         let valorProdutos = 0
         let valorFrete = 0
+        let quantidadeItens = 0
         
         if(carrinho?.cafes.length > 0){
             carrinho.cafes.forEach((cafe) => {
-                valorProdutos += parseInt(cafe.preco.replace(/[^0-9]/g, ''))
+                valorProdutos += parseInt(cafe.preco.replace(/[^0-9]/g, '')) * cafe.quantidade
+                quantidadeItens += cafe.quantidade
             })
             valorFrete = carrinho?.cafes.length * 500
 
@@ -71,16 +73,20 @@ export default function ScreenCar() {
             setValor('000,00')
             setFrete('000,00')
             setTotal('000,00')
+            setLista(0)
         }
 
-    }, [carrinho.cafes.length])
+        setLista(quantidadeItens)
+        console.log(lista)
+
+    }, [carrinho.cafes.length, lista, quantidadeItens])
 
    
     return (
         <SafeAreaView style={styles.container}>
 
             <Stack.Screen options={{
-                title: 'Pedidos',
+                title: 'Carrinho',
                 headerShown: true,
                 headerStyle: { backgroundColor: '#592C28' },
                 headerTitleStyle: { color: 'white', fontFamily: 'OswaldMedium', fontSize: 28 },

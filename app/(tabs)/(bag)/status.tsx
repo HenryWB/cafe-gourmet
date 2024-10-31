@@ -1,36 +1,32 @@
 import { ButtonPadrao } from "@/components/button";
-import { router, Stack } from "expo-router";
+import { router, Stack, useGlobalSearchParams, useLocalSearchParams } from "expo-router";
 import React, { useContext, useEffect, useState } from "react";
 import { StyleSheet, SafeAreaView, Text, Pressable, View, TextInput, ScrollView, FlatList} from "react-native";
 import firestore, { query } from '@react-native-firebase/firestore'
 import { FirebaseContext } from "@/contexts/FirebaseContext";
 import { ProductsContext } from "@/contexts/productsContext";
 
+type Props = {
+    id: string,
+}
 
-export default function ScreenStatus() {
+export default function ScreenStatus(props: Props) {
+    const {id} = useLocalSearchParams<Props>()
     const {currentUser} = useContext(FirebaseContext)
     const {pedido} = useContext(ProductsContext)
     const [obs, setObs] = useState('')
     const [listObs, setListObs] = useState<Array<string>>()
 
-    function buy() {
-        router.navigate('/buy');
-    }
-
-    function car() {
-        router.navigate('/bag');
-    }
-
     useEffect(()=>{
         listarObservacoes()
-    }, [])
+    }, [props.id])
 
     const listarObservacoes =  () => {
         if (currentUser?.id) {
-            firestore().collection('Users').doc(currentUser?.id).collection('Pedidos').where('id', '==', pedido?.id).get().then(
+            firestore().collection('Users').doc(currentUser?.id).collection('Pedidos').where('id', '==', id).get().then(
                 (snapShot) => {
-                    if (snapShot.empty && currentUser?.id && pedido?.id) {
-                        firestore().collection('Users').doc(currentUser?.id).collection('Pedidos').doc(pedido?.id).collection('Observacoes').get().then(
+                    if (snapShot.empty && currentUser?.id && id) {
+                        firestore().collection('Users').doc(currentUser?.id).collection('Pedidos').doc(id).collection('Observacoes').get().then(
                             (snapShot) => {
                                 let lista: Array<string> = []
                                 snapShot.forEach(item => {
@@ -72,8 +68,6 @@ export default function ScreenStatus() {
                 headerStyle: { backgroundColor: '#592C28' },
                 headerTitleStyle: { color: 'white', fontFamily: 'OswaldMedium', fontSize: 28 },
                 headerTintColor: '#F2E8DF',
-                headerBackButtonMenuEnabled: false,
-                headerBackVisible: false
             }} />
 
             <View style={styles.content}>
@@ -103,10 +97,6 @@ export default function ScreenStatus() {
                 keyExtractor={(item) => item}
                 renderItem={(item) => <Text style={styles.obsText}>{item.item}</Text>}
             />
-
-
-
-
         </SafeAreaView>
     );
 };

@@ -1,8 +1,6 @@
 import { ButtonPadrao } from "@/components/button";
 import CardCadastroEndereco from "@/components/card-cadastros-endereco";
 import CardCadastroCartao from "@/components/card-cadastros-cartao";
-import { CardPedido } from "@/components/card-pedido";
-import Radio from "@/components/inputs/Radio";
 import { FirebaseContext } from "@/contexts/FirebaseContext";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import React, { useContext, useEffect } from "react";
@@ -22,7 +20,7 @@ type Props = {
     formaPagamento?: string
 }
 
-export default function ScreenBuy() {
+export default function ScreenCompra() {
     const {currentUser, setCard, currentCard, setEndereco, currentEndereco} = React.useContext(FirebaseContext)
 
     const [contextCartao, setContextCartao] = React.useState('');
@@ -98,16 +96,17 @@ export default function ScreenBuy() {
 
         if(pedido){
             let finaliza: Pedido = {
+                id: '',
                 carrinho: pedido?.carrinho,
                 endereco: Enderecos?.find(t => t.id == endereco),
                 formaPagamento: pedido?.formaPagamento,
-                status: 'finalizado',
+                status: 'enviando',
                 valorTotal: pedido?.valorTotal,
                 cartao: pedido?.formaPagamento === 'cartao' ?Cartoes?.find(t => t.id == cartao) : null,
             }
             pedido.endereco = Enderecos?.find(t => t.id == endereco)
             pedido.cartao = pedido?.formaPagamento === 'cartao' ?Cartoes?.find(t => t.id == cartao) : null
-            pedido.status = 'finalizado'
+            pedido.status = 'enviando'
 
             if(currentUser?.id && pedido){
                 firestore().collection('Users').doc(currentUser?.id).collection('Pedidos').add(finaliza).then((query) => {
@@ -117,8 +116,9 @@ export default function ScreenBuy() {
                     pedido.id = finaliza.id
                     console.log(pedido.id)
                     alert('Pedido realizado com sucesso')
-                    //console.log(pedido)
-                    router.replace('/status');
+                    const params = new URLSearchParams();
+                    params.set('id', pedido.id.toString())
+                    router.replace(`/status?${params.toString()}`)
                 })
             }
         }

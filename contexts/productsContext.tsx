@@ -13,6 +13,8 @@ export interface IProductsContext {
     setProducts: React.Dispatch<React.SetStateAction<Cafe[] | null>>,
     dispatchCarrinho: React.Dispatch<CarrinhoAction>,
     setPedido: React.Dispatch<React.SetStateAction<Pedido | null>>,
+    quantidadeItens: number,
+    setQuantidadeItens: React.Dispatch<React.SetStateAction<number>>,
 }
 
 export interface IProductsProvider {
@@ -34,6 +36,7 @@ export const ProductsProvider: React.FC<IProductsProvider> = ({children}) => {
     const [carrinho, dispatchCarrinho] = useReducer(carrinhoReducer, initialState)
     const [pedido, setPedido] = useState<Pedido | null>(null)
     const [products, setProducts] = React.useState<Cafe[] | null>(null)
+    const [quantidadeItens, setQuantidadeItens] = React.useState(0)
     
     useEffect(() => {
         firestore().collection('Cafes').get().then((query) => {
@@ -59,7 +62,7 @@ export const ProductsProvider: React.FC<IProductsProvider> = ({children}) => {
 
 
     return (
-        <ProductsContext.Provider value={{ carrinho, dispatchCarrinho, products, setProducts, pedido, setPedido}}>
+        <ProductsContext.Provider value={{ carrinho, dispatchCarrinho, products, setProducts, pedido, setPedido, quantidadeItens, setQuantidadeItens}}>
             {children}
         </ProductsContext.Provider>
     );
