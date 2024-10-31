@@ -1,9 +1,11 @@
 import { Stack } from 'expo-router';
 import { useFonts } from "expo-font";
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 
 import 'react-native-reanimated';
+import { FirebaseProvider } from '@/contexts/FirebaseContext';
+import { ProductsProvider } from '@/contexts/productsContext';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -25,6 +27,7 @@ export default function RootLayout() {
     if (loaded || error) {
       SplashScreen.hideAsync();
     }
+
   }, [loaded, error]);
 
   if (!loaded && !error) {
@@ -32,14 +35,18 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name='(tabs)' />
-      <Stack.Screen name="index" />
-      <Stack.Screen name="auth/login" />
-      <Stack.Screen name="auth/forgot" />
-      <Stack.Screen name="auth/signup" />
-      <Stack.Screen name="infos/[id]"  />
-    </Stack>
+    <FirebaseProvider>
+      <ProductsProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name='(tabs)' />
+          <Stack.Screen name="index" />
+          <Stack.Screen name="auth/login" />
+          <Stack.Screen name="auth/forgot" />
+          <Stack.Screen name="auth/signup" />
+          <Stack.Screen name="infos/[id]" />
+        </Stack>
+      </ProductsProvider>
+    </FirebaseProvider>
   );
 }
 

@@ -1,10 +1,26 @@
 import React from 'react';
-import { Image, StyleSheet, View, Text, TextInput, SafeAreaView, StatusBar, ViewBase, Pressable } from 'react-native';
-import { ButtonRoute } from '@/components/button-route';
-import { router } from 'expo-router';
+import { StyleSheet, View, Text, TextInput, SafeAreaView, StatusBar, Pressable } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { ButtonPadrao } from '@/components/button';
+import  firebase  from '@react-native-firebase/app';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import { FirebaseContext } from '@/contexts/FirebaseContext';
+import { ProductsContext } from '@/contexts/productsContext';
+
+
+type Props = {
+    email?: string,
+}
+
 
 export default function ScreenSignup() {
-    const [Email, setEmail] = React.useState('')
+    const firebaseContext  = React.useContext(FirebaseContext);
+    const productsContext  = React.useContext(ProductsContext);
+
+    const { email } = useLocalSearchParams<Props>();
+
+    const [Email, setEmail] = React.useState<string>(email || '')
     const [User, setUser] = React.useState('')
     const [Pass, setPass] = React.useState('')
 
@@ -12,6 +28,60 @@ export default function ScreenSignup() {
         router.navigate('/auth/login')
     }
 
+    const addUser = async () => {
+        if(Email === '' || Email === null) return alert('por favor insira um e-mail')
+        if(Pass === '' || Pass === null) return alert('por favor insira uma senha')
+        if(User === '' || Pass === null) return alert('por favor insira um usuário')
+
+        
+        auth()
+        .createUserWithEmailAndPassword(Email, Pass)
+        .then(() => {
+            firestore()
+            .collection('Users')
+            .add({
+                name: User,
+                email: Email,
+                tipo: 'cliente',
+            })
+            .then(infos => {
+                const newUser =  {
+                    id: infos.id,
+                    name: User,
+                    email: Email,
+                    tipo: 'cliente',
+                }
+                firebaseContext.setUser(newUser)
+                productsContext.dispatchCarrinho({
+                    type: 'CLEAN',
+                    cafe: {
+                        id: '',
+                        desc: '',
+                        img: '',
+                        preco: '',
+                        quantidade: 0,
+                        titulo: '',
+                        gramas: '',
+                    },
+                    index: -1
+                })
+
+
+                router.navigate('/products');
+            });
+        })
+        .catch(error => {
+            if (error.code === 'auth/email-already-in-use') {
+            alert('O email informado já está sendo utilizado');
+            }
+        
+            if (error.code === 'auth/invalid-email') {
+            alert('Esse endereço de email é invalido');
+            }
+        });
+    }
+    
+    
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.title}>Crie sua conta!</Text>
@@ -46,7 +116,7 @@ export default function ScreenSignup() {
 
 
 
-                <ButtonRoute title='Cadastrar' width={120} route={'/products'} methodRout='replace' />
+                <ButtonPadrao title='Cadastrar' width={120} onPress={addUser} height={50} marginTop={25}/>
 
                 <Pressable style={styles.login} onPress={handleLogin}>
                     <Text style={styles.textLogin}>Já possui cadastro? <Text>Clique aqui.</Text></Text>

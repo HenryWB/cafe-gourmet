@@ -1,18 +1,22 @@
+import { Cartao } from "@/types/cartao";
+import { Endereco } from "@/types/endereco";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Dispatch, SetStateAction } from "react";
 import { StyleSheet, View, Text, Pressable } from "react-native"
 
 type Props = {
-    options: Array<{title: string, label_1: string, text_1: string, label_2: string, text_2: string, label_3: string, text_3: string, label_4: string, text_4: string, label_5: string, text_5: string, id: string}>,
+    options: Array<Cartao> | null,
     checkedValue: string,
-    onChange: Dispatch<SetStateAction<string>>
+    onChange: (Dispatch<SetStateAction<string>>)
 }
 
 
-export const CardCadastro = (props: Props) => {
+export const CardCadastroCartao = (props: Props) => {
     return(
         <View style={styles.view}>
-            { props.options.map((option)=>{
+            {
+                props.options == null || props.options.length == 0 ? <Text style={styles.title}>Não há item cadastrado!</Text> :
+                props.options.map((option)=>{
                 let active =  props.checkedValue == option.id 
                 return(
                     <Pressable 
@@ -25,32 +29,33 @@ export const CardCadastro = (props: Props) => {
                         </View>
 
                         <View style={styles.areaMiddle}>
-                            <Text style={styles.title}>{option.title}</Text>
+                            <Text style={styles.title}>{option.name}</Text>
+
                             <View style={styles.textArea}>
-                                <Text style={styles.label}>{option.label_1}: </Text>
-                                <Text style={styles.text}>{option.text_1}</Text>
+                                <Text style={styles.label}>Nome: </Text>
+                                <Text style={styles.text}>{option.name}</Text>
                             </View>
 
                             <View style={styles.textArea}>
-                                <Text style={styles.label}>{option.label_2}: </Text>
-                                <Text style={styles.text}>{option.text_2}</Text>
+                                <Text style={styles.label}>Número: </Text>
+                                <Text style={styles.text}>{option.numero}</Text>
                             </View>
 
                             <View style={styles.textArea}>
-                                <Text style={styles.label}>{option.label_3}: </Text>
-                                <Text style={styles.text}>{option.text_3}</Text>
+                                <Text style={styles.label}>CPF: </Text>
+                                <Text style={styles.text}>{option.CPF}</Text>
                             </View>
                         </View>
 
                         <View style={styles.areaEnd}>
                             <View style={styles.textArea}>
-                                <Text style={styles.label}>{option.label_4}: </Text>
-                                <Text style={styles.text}>{option.text_4}</Text>
+                                <Text style={styles.label}>CVV: </Text>
+                                <Text style={styles.text}>{option.CVV}</Text>
                             </View>
 
                             <View style={styles.textArea}>
-                                <Text style={styles.label}>{option.label_5}: </Text>
-                                <Text style={styles.text}>{option.text_5}</Text>
+                                <Text style={styles.label}>Validade: </Text>
+                                <Text style={styles.text}>{option.validade}</Text>
                             </View>
 
                         </View>
@@ -93,9 +98,10 @@ export const styles = StyleSheet.create({
     },
 
     areaMiddle:{
-        width: 140,
+        width: 160,
         height: '100%',
         justifyContent: 'space-between',
+        resizeMode: 'cover',
     },
 
     areaEnd:{
@@ -129,4 +135,4 @@ export const styles = StyleSheet.create({
 
 });
 
-export default CardCadastro;
+export default CardCadastroCartao;

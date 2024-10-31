@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "736894003464",
+    "firebase_url": "https://cafe-258cc-default-rtdb.firebaseio.com",
+    "project_id": "cafe-258cc",
+    "storage_bucket": "cafe-258cc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:736894003464:android:eb5006aae81fc1f085e4bd",
+        "android_client_info": {
+          "package_name": "com.henryque.cafegourmet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC3hHr2rHmFtkLt56jTVF_LmBxaVuZGgdk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

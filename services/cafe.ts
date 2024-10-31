@@ -1,9 +1,12 @@
-import {data} from '@/data/index'
+import { ProductsContext } from '@/contexts/productsContext'
+import { useContext } from 'react'
 
 export const getAllProducts = () => {
-    return data.products
+    const productsContext = useContext(ProductsContext)
+    return productsContext.products
 }
 
-export const getProductById = (id: Number) => {
-    return data.products.find(item => item.id === id)
+export const getProductById = (id: string) => {
+    const productsContext = useContext(ProductsContext)
+    return productsContext.products?.find(item => item.id === id)
 }

@@ -1,18 +1,33 @@
 import { StyleSheet, View, Text, Image, Pressable } from 'react-native'
 import { ButtonAmount } from './button-amount';
 import { router } from 'expo-router';
-import { Cafe } from '@/.expo/types/cafe';
+import { Cafe } from '@/types/cafe';
+import { useCallback, useContext } from 'react';
+import { ProductsContext } from '@/contexts/productsContext';
 
 type Props = {
     cafe: Cafe,
 }
 
 export const CardPedido = (props: Props) => {
+    const {carrinho, dispatchCarrinho} = useContext(ProductsContext)
 
     const handleClick = () => {
         router.push(`/infos/${props.cafe.id}`)
     }
 
+    
+    const remover = async () => {
+        let i = carrinho.cafes.findIndex(item => item.id === props.cafe.id)
+
+       await dispatchCarrinho(
+        {
+            type: 'REMOVE',
+            cafe: props.cafe,
+            index: i
+        }
+       )
+    }
 
     return (
         <View style={styles.container}>
@@ -31,14 +46,14 @@ export const CardPedido = (props: Props) => {
                 <Pressable onPress={handleClick}>
                     <Text style={styles.saibaMais}>Saiba Mais</Text>
                 </Pressable>
-                <ButtonAmount color='white' colorText='#592C28'/>
+                <ButtonAmount id={props.cafe.id} color='white' colorText='#592C28'/>
 
                 </View>
                 
             </View>
 
             
-            <Pressable style={styles.remove}>
+            <Pressable style={styles.remove} onPress={remover}>
                 <Text style={styles.removeText}>X</Text>
             </Pressable>
 

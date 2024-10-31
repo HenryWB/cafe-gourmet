@@ -1,17 +1,28 @@
-import { ButtonRoute } from '@/components/button-route';
 import { router } from 'expo-router';
 import React from 'react';
-import { StyleSheet, SafeAreaView, StatusBar, Image, ImageBackground } from 'react-native';
+import { StyleSheet, SafeAreaView, StatusBar, Image, ImageBackground, Text } from 'react-native';
+import auth from '@react-native-firebase/auth';
+import { ButtonPadrao } from '@/components/button';
 
 
 
 export default function Screen() {
+  const handleLogin = () => {
+    if(auth().currentUser == null){
+      router.navigate('/auth/login')
+    }
+    
+    else{
+      router.navigate('/products')
+    }
+  }
+  
   return (
-
     <SafeAreaView style={styles.container} >
+      
       <ImageBackground source={require('@/assets/images/bg-inicial.png')} style={styles.content}>
         <Image source={require('@/assets/images/logo.png')} style={styles.logo} />
-        <ButtonRoute width={120} route={'/auth/login'} title='Acessar' methodRout='navigate'/>
+        <ButtonPadrao width={120} onPress={handleLogin} title='Acessar' marginTop={20} height={50}/>
       </ImageBackground>
     </SafeAreaView>
   );
@@ -35,4 +46,10 @@ const styles = StyleSheet.create({
     height: 100,
     resizeMode: 'contain',
   },
+
+  h1:{
+    textAlign: 'center',
+    fontSize: 24,
+    marginBottom:20
+  }
 });
